@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <script>
+        (function () {
+            var theme = 'light';
+            try { theme = localStorage.getItem('theme') || 'light'; } catch (e) { }
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simpler Tasks Lite — Simple, Fast To‑Do App</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animations only — no colour/font overrides so all DaisyUI themes work cleanly */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeUp 0.6s ease both;
+        }
+
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
+
+        .delay-4 {
+            animation-delay: 0.4s;
+        }
+
+        .delay-5 {
+            animation-delay: 0.5s;
+        }
+
+        @keyframes checkPop {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.15);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .check-animate {
+            animation: checkPop 0.4s ease both;
+        }
+
+        /* Behaviour only */
+        .task-item {
+            transition: transform 0.2s ease;
+        }
+
+        .task-item:hover {
+            transform: translateX(4px);
+        }
+
+        .task-done {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .feature-card {
+            transition: transform 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .pricing-popular {
+            transform: scale(1.03);
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-base-100 text-base-content">
+
+    <!-- ───────────────── NAVBAR ───────────────── -->
+    <div class="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-50 border-b border-base-200">
+        <div class="navbar-start">
+            <a href="/" class="flex items-center gap-2 ml-2">
+                <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary-content" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                </div>
+                <span class="font-semibold text-base tracking-tight">SimplerToDo</span>
+            </a>
+        </div>
+        <div class="navbar-center hidden md:flex">
+            <ul class="menu menu-horizontal gap-1 text-sm">
+                <li><a href="#features" class="rounded-lg font-medium">Features</a></li>
+                <li><a href="#screenshots" class="rounded-lg font-medium">Screenshots</a></li>
+                <li><a href="#compare" class="rounded-lg font-medium">Compare</a></li>
+                <li><a href="#pricing" class="rounded-lg font-medium">Pricing</a></li>
+            </ul>
+        </div>
+        <div class="navbar-end gap-2 mr-2">
+            <!-- Theme picker -->
+            <select id="theme-select" class="select select-sm rounded-lg font-medium" title="Change theme"
+                onchange="applyTheme(this.value, event)">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="cupcake">Cupcake</option>
+                <option value="bumblebee">Bumblebee</option>
+                <option value="emerald">Emerald</option>
+                <option value="corporate">Corporate</option>
+                <option value="synthwave">Synthwave</option>
+                <option value="retro">Retro</option>
+                <option value="cyberpunk">Cyberpunk</option>
+                <option value="valentine">Valentine</option>
+                <option value="halloween">Halloween</option>
+                <option value="garden">Garden</option>
+                <option value="forest">Forest</option>
+                <option value="aqua">Aqua</option>
+                <option value="lofi">Lofi</option>
+                <option value="pastel">Pastel</option>
+                <option value="fantasy">Fantasy</option>
+                <option value="wireframe">Wireframe</option>
+                <option value="black">Black</option>
+                <option value="luxury">Luxury</option>
+                <option value="dracula">Dracula</option>
+                <option value="cmyk">CMYK</option>
+                <option value="autumn">Autumn</option>
+                <option value="business">Business</option>
+                <option value="acid">Acid</option>
+                <option value="lemonade">Lemonade</option>
+                <option value="night">Night</option>
+                <option value="coffee">Coffee</option>
+                <option value="winter">Winter</option>
+                <option value="dim">Dim</option>
+                <option value="nord">Nord</option>
+                <option value="sunset">Sunset</option>
+            </select>
+            <a href="https://app.SimplerToDo.com" class="btn btn-primary btn-sm rounded-lg">Get Started</a>
+        </div>
+    </div>
+
+    <!-- ───────────────── HERO ───────────────── -->
+    <section class="relative overflow-hidden">
+        <div class="max-w-6xl mx-auto px-6 pt-24 pb-20 flex flex-col lg:flex-row items-center gap-16">
+
+            <!-- Left: Copy -->
+            <div class="flex-1 text-center lg:text-left">
+                <div class="fade-up delay-1">
+                    <span class="badge badge-primary badge-outline text-xs mb-5">Simple, fast task manager for desktop &amp; mobile</span>
+                </div>
+                <h1 class="fade-up delay-2 text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
+                    A calmer to‑do list<br />for <span class="text-primary">real life.</span>
+                </h1>
+                <p class="fade-up delay-3 text-base-content/60 text-lg leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0">
+                    Simpler Tasks Lite is a lightning‑fast, keyboard‑friendly to‑do app with five simple sections,
+                    smart tags, and rich reports. Use it free on one device, or add sync across your desktop, laptop,
+                    tablet, and phone with a one‑time upgrade.
+                </p>
+                <div class="fade-up delay-4 flex flex-wrap gap-3 justify-center lg:justify-start">
+                    <a href="https://app.SimplerToDo.com" class="btn btn-primary rounded-lg gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Start for free
+                    </a>
+                    <a href="#features" class="btn btn-ghost rounded-lg border border-base-300">See how it works</a>
+                </div>
+                <p class="fade-up delay-5 text-xs text-base-content/40 mt-4">
+                    Free version is full‑featured (no sync). Pro adds secure cloud sync across all your devices.
+                </p>
+            </div>
+
+            <!-- Right: Mock App UI (desktop-style card) -->
+            <div class="fade-up delay-3 flex-1 w-full max-w-sm mx-auto lg:mx-0">
+                <div class="card bg-base-100 shadow-2xl border border-base-200 w-full">
+                    <div class="card-body p-5">
+                        <!-- App header -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <p class="text-xs text-base-content/40">Today</p>
+                                <h3 class="font-semibold text-base">Simpler Tasks Lite</h3>
+                            </div>
+                            <div class="badge badge-primary badge-sm">3 left</div>
+                        </div>
+
+                        <!-- Task list -->
+                        <div class="space-y-2" id="task-list">
+                            <div class="task-item flex items-center gap-3 p-2.5 rounded-lg bg-base-200/50 cursor-pointer"
+                                onclick="toggleTask(this)">
+                                <input type="checkbox" class="checkbox checkbox-primary checkbox-sm" checked
+                                    onclick="event.stopPropagation(); toggleTask(this.parentElement)" />
+                                <span class="text-sm task-done">Buy groceries</span>
+                            </div>
+                            <div class="task-item flex items-center gap-3 p-2.5 rounded-lg bg-base-200/50 cursor-pointer"
+                                onclick="toggleTask(this)">
+                                <input type="checkbox" class="checkbox checkbox-primary checkbox-sm"
+                                    onclick="event.stopPropagation(); toggleTask(this.parentElement)" />
+                                <span class="text-sm">Review pull request</span>
+                            </div>
+                            <div class="task-item flex items-center gap-3 p-2.5 rounded-lg bg-base-200/50 cursor-pointer"
+                                onclick="toggleTask(this)">
+                                <input type="checkbox" class="checkbox checkbox-primary checkbox-sm"
+                                    onclick="event.stopPropagation(); toggleTask(this.parentElement)" />
+                                <span class="text-sm">Call dentist</span>
+                            </div>
+                            <div class="task-item flex items-center gap-3 p-2.5 rounded-lg bg-base-200/50 cursor-pointer"
+                                onclick="toggleTask(this)">
+                                <input type="checkbox" class="checkbox checkbox-primary checkbox-sm"
+                                    onclick="event.stopPropagation(); toggleTask(this.parentElement)" />
+                                <span class="text-sm">Finish homepage design</span>
+                            </div>
+                        </div>
+
+                        <!-- Add task input with keyboard hint -->
+                        <div class="flex gap-2 mt-4">
+                            <input type="text" placeholder="Type “1. Buy milk” and press Enter…"
+                                class="input input-sm input-bordered flex-1 text-sm rounded-lg" id="new-task-input"
+                                onkeydown="addTask(event)" />
+                            <button class="btn btn-primary btn-sm rounded-lg px-3" onclick="addTaskBtn()">+</button>
+                        </div>
+
+                        <!-- Sync badge -->
+                        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-base-200">
+                            <span class="inline-block w-2 h-2 rounded-full bg-success"></span>
+                            <span class="text-xs text-base-content/40">Offline‑first · Ctrl/⌘+K for Quick Actions</span>
+                            <span class="ml-auto">
+                                <span class="badge badge-ghost badge-xs">Lite</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ───────────────── SCREENSHOTS ───────────────── -->
+    <section id="screenshots" class="py-20 bg-base-100">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-10">
+                <p class="section-label text-primary mb-3">Looks great everywhere</p>
+                <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-3">Desktop, laptop, tablet, phone.</h2>
+                <p class="text-base-content/60 text-sm md:text-base max-w-2xl mx-auto">
+                    Simpler Tasks Lite is a web app that adapts beautifully to any screen.
+                    Use it in a browser on your desktop, pin it on your phone’s home screen,
+                    or keep it open in a narrow sidebar while you work.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card bg-base-200/60 border border-base-300 shadow-sm overflow-hidden">
+                    <figure class="bg-base-200">
+                        <img src="/images/screenshots/desktop-main.png" alt="Simpler Tasks Lite on desktop"
+                            class="w-full object-cover" loading="lazy" />
+                    </figure>
+                    <div class="card-body p-4">
+                        <h3 class="font-semibold text-sm mb-1">Desktop &amp; laptop</h3>
+                        <p class="text-xs text-base-content/60">
+                            Keep all five sections visible while you work, with keyboard shortcuts and fast search.
+                        </p>
+                    </div>
+                </div>
+                <div class="card bg-base-200/60 border border-base-300 shadow-sm overflow-hidden">
+                    <figure class="bg-base-200">
+                        <img src="/images/screenshots/tablet-report.png" alt="Report preview on tablet"
+                            class="w-full object-cover" loading="lazy" />
+                    </figure>
+                    <div class="card-body p-4">
+                        <h3 class="font-semibold text-sm mb-1">Tablet</h3>
+                        <p class="text-xs text-base-content/60">
+                            Relaxed, two‑pane layout that’s perfect for reviewing reports or planning your week.
+                        </p>
+                    </div>
+                </div>
+                <div class="card bg-base-200/60 border border-base-300 shadow-sm overflow-hidden">
+                    <figure class="bg-base-200">
+                        <img src="/images/screenshots/mobile-today.png" alt="Today view on mobile"
+                            class="w-full object-cover" loading="lazy" />
+                    </figure>
+                    <div class="card-body p-4">
+                        <h3 class="font-semibold text-sm mb-1">Mobile</h3>
+                        <p class="text-xs text-base-content/60">
+                            Optimized for touch with large tap targets, but still lightning‑fast for typing on the go.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────────────── FEATURES ───────────────── -->
+    <section id="features" class="py-24 bg-base-200/40">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <p class="section-label text-primary mb-3">Why Simpler Tasks Lite</p>
+                <h2 class="text-4xl font-bold tracking-tight">Everything you need.<br />Nothing to configure.</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                <div class="feature-card card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="card-body p-6">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                                <polyline points="13 2 13 9 20 9" />
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Five simple sections</h3>
+                        <p class="text-sm text-base-content/55 leading-relaxed">
+                            Today, Tomorrow, Next 7 Days, Sometime, and Notes. Type <code class="text-xs bg-base-200 px-1 rounded">1.</code>–<code class="text-xs bg-base-200 px-1 rounded">5.</code> to send tasks straight where they belong.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="feature-card card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="card-body p-6">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 20l9-5-9-5-9 5 9 5z" />
+                                <path d="M3 10l9-5 9 5" />
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Open source &amp; hackable</h3>
+                        <p class="text-sm text-base-content/55 leading-relaxed">
+                            The core app is open source on GitHub. You can inspect the code, fork it, or build your own
+                            custom workflows on top of a single‑file HTML version.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="feature-card card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="card-body p-6">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="4" width="7" height="16" rx="1" />
+                                <rect x="14" y="2" width="7" height="20" rx="1" />
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Standalone desktop option</h3>
+                        <p class="text-sm text-base-content/55 leading-relaxed">
+                            Prefer an app instead of a tab? Simpler Tasks Lite can be wrapped as a dedicated desktop app
+                            for macOS and Windows with a lightweight Electron shell.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="feature-card card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="card-body p-6">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Friendly chat support</h3>
+                        <p class="text-sm text-base-content/55 leading-relaxed">
+                            Have a question or want help tuning your workflow? Reach out from the website and get
+                            friendly, human‑level chat support.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="feature-card card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="card-body p-6">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10" />
+                                <polyline points="1 20 1 14 7 14" />
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Sync across devices</h3>
+                        <p class="text-sm text-base-content/55 leading-relaxed">
+                            Go Pro once and your tasks follow you between desktop, laptop, tablet, and phone —
+                            powered by Dexie Cloud for seamless, encrypted sync.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="feature-card card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="card-body p-6">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7" />
+                                <rect x="14" y="3" width="7" height="7" />
+                                <rect x="14" y="14" width="7" height="7" />
+                                <rect x="3" y="14" width="7" height="7" />
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Smart tags for people &amp; places</h3>
+                        <p class="text-sm text-base-content/55 leading-relaxed">
+                            Use <strong>@name</strong> for people, <strong>#home</strong> or <strong>#office</strong> for locations,
+                            and even <strong>::global::</strong> tags. Tap any tag to instantly filter your whole list.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="feature-card card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="card-body p-6">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Zero setup, instant start</h3>
+                        <p class="text-sm text-base-content/55 leading-relaxed">
+                            Open the app and start typing. No signup required for Lite. Just you, your tasks,
+                            and a clean UI that stays out of the way.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="feature-card card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="card-body p-6">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Private by default</h3>
+                        <p class="text-sm text-base-content/55 leading-relaxed">
+                            Lite users never touch a server. Pro users get secure cloud sync. Your tasks stay yours.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="feature-card card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="card-body p-6">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                                <line x1="6" y1="1" x2="6" y2="4" />
+                                <line x1="10" y1="1" x2="10" y2="4" />
+                                <line x1="14" y1="1" x2="14" y2="4" />
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Keyboard‑first &amp; blazing fast</h3>
+                        <p class="text-sm text-base-content/55 leading-relaxed">
+                            Built on React with Dexie. Use <strong>Ctrl/⌘+K</strong> to open Quick Actions and keep your
+                            hands on the keyboard while you fly through your list.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────────────── COMPARE ───────────────── -->
+    <section id="compare" class="py-24 bg-base-100">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <p class="section-label text-primary mb-3">Lite vs Pro (and vs Todoist)</p>
+                <h2 class="text-4xl font-bold tracking-tight">Start free. Upgrade once.<br />Save a lot vs subscriptions.</h2>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="table table-lg w-full">
+                    <thead>
+                        <tr class="border-base-200">
+                            <th class="bg-base-200/50 rounded-tl-xl text-base-content/60 font-medium w-1/2">Feature</th>
+                            <th class="bg-base-200/50 text-center font-semibold">
+                                <div class="flex flex-col items-center gap-1">
+                                    <span>Lite</span>
+                                    <span class="badge badge-ghost badge-sm font-normal">Free</span>
+                                </div>
+                            </th>
+                            <th class="bg-primary text-primary-content rounded-tr-xl text-center font-semibold">
+                                <div class="flex flex-col items-center gap-1">
+                                    <span>Pro</span>
+                                    <span
+                                        class="badge badge-sm bg-primary-content/20 text-primary-content border-0 font-normal">Paid</span>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-base-200">
+                            <td class="text-sm">Unlimited tasks</td>
+                            <td class="text-center"><span class="text-success text-lg">✓</span></td>
+                            <td class="text-center bg-primary/5"><span class="text-success text-lg">✓</span></td>
+                        </tr>
+                        <tr class="border-base-200">
+                            <td class="text-sm">Offline storage (IndexedDB)</td>
+                            <td class="text-center"><span class="text-success text-lg">✓</span></td>
+                            <td class="text-center bg-primary/5"><span class="text-success text-lg">✓</span></td>
+                        </tr>
+                        <tr class="border-base-200">
+                            <td class="text-sm">Multiple lists</td>
+                            <td class="text-center"><span class="text-success text-lg">✓</span></td>
+                            <td class="text-center bg-primary/5"><span class="text-success text-lg">✓</span></td>
+                        </tr>
+                        <tr class="border-base-200">
+                            <td class="text-sm">No account required</td>
+                            <td class="text-center"><span class="text-success text-lg">✓</span></td>
+                            <td class="text-center bg-primary/5"><span class="text-base-content/30">—</span></td>
+                        </tr>
+                        <tr class="border-base-200">
+                            <td class="text-sm">Sync across devices</td>
+                            <td class="text-center"><span class="text-base-content/30">—</span></td>
+                            <td class="text-center bg-primary/5"><span class="text-success text-lg">✓</span></td>
+                        </tr>
+                        <tr class="border-base-200">
+                            <td class="text-sm">Real-time cloud backup</td>
+                            <td class="text-center"><span class="text-base-content/30">—</span></td>
+                            <td class="text-center bg-primary/5"><span class="text-success text-lg">✓</span></td>
+                        </tr>
+                        <tr class="border-base-200">
+                            <td class="text-sm">Access on phone, tablet, desktop</td>
+                            <td class="text-center"><span class="text-success text-lg">✓</span></td>
+                            <td class="text-center bg-primary/5"><span class="text-success text-lg">✓</span></td>
+                        </tr>
+                        <tr class="border-base-200">
+                            <td class="text-sm">Priority support</td>
+                            <td class="text-center"><span class="text-base-content/30">—</span></td>
+                            <td class="text-center bg-primary/5"><span class="text-success text-lg">✓</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────────────── PRICING ───────────────── -->
+    <section id="pricing" class="py-24 bg-base-200/40">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <p class="section-label text-primary mb-3">Pricing</p>
+                <h2 class="text-4xl font-bold tracking-tight">Simple, predictable pricing.</h2>
+                <p class="text-base-content/50 mt-4 text-base">
+                    No subscriptions, no trials that expire. Use Lite free forever, or unlock 3 years of sync with a single payment.
+                </p>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-6 items-center justify-center">
+
+                <!-- Lite -->
+                <div class="card bg-base-100 border border-base-200 shadow-sm w-full max-w-sm">
+                    <div class="card-body p-8">
+                        <p class="section-label text-base-content/40 mb-2">Lite (Free)</p>
+                        <div class="flex items-end gap-1 mb-1">
+                            <span class="text-5xl font-bold tracking-tight">$0</span>
+                        </div>
+                        <p class="text-sm text-base-content/50 mb-6">Free, forever. No credit card.</p>
+                        <ul class="space-y-3 mb-8 text-sm">
+                            <li class="flex items-center gap-2"><span class="text-success">✓</span> Unlimited tasks</li>
+                            <li class="flex items-center gap-2"><span class="text-success">✓</span> Offline-first
+                                storage</li>
+                            <li class="flex items-center gap-2"><span class="text-success">✓</span> Five simple sections</li>
+                            <li class="flex items-center gap-2"><span class="text-success">✓</span> Smart tags &amp; search</li>
+                            <li class="flex items-center gap-2"><span class="text-success">✓</span> No account needed</li>
+                            <li class="flex items-center gap-2 text-base-content/35"><span>—</span> Cross‑device sync</li>
+                        </ul>
+                        <a href="https://app.SimplerToDo.com" class="btn btn-outline rounded-lg w-full">Open the app</a>
+                    </div>
+                </div>
+
+                <!-- Pro -->
+                <div class="card bg-primary text-primary-content shadow-2xl w-full max-w-sm pricing-popular relative">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span
+                            class="badge bg-primary-content text-primary border-0 shadow-md font-semibold text-xs px-3">Most
+                            Popular</span>
+                    </div>
+                    <div class="card-body p-8">
+                        <p class="section-label text-primary-content/60 mb-2">Pro (Sync)</p>
+                        <div class="flex items-end gap-1 mb-1">
+                            <span class="text-4xl md:text-5xl font-bold tracking-tight">$19.95</span>
+                        </div>
+                        <p class="text-sm text-primary-content/60 mb-6">
+                            One‑time purchase. Includes 3 years of secure sync across all your devices.
+                        </p>
+                        <ul class="space-y-3 mb-8 text-sm">
+                            <li class="flex items-center gap-2"><span class="text-primary-content">✓</span> Everything
+                                in Lite</li>
+                            <li class="flex items-center gap-2"><span class="text-primary-content">✓</span> Sync across
+                                all devices</li>
+                            <li class="flex items-center gap-2"><span class="text-primary-content">✓</span> Real-time
+                                cloud backup</li>
+                            <li class="flex items-center gap-2"><span class="text-primary-content">✓</span> Priority
+                                support</li>
+                            <li class="flex items-center gap-2"><span class="text-primary-content">✓</span> Optional 3‑year renewals for $9.95</li>
+                        </ul>
+                        <a href="https://app.SimplerToDo.com"
+                            class="btn bg-primary-content text-primary hover:bg-primary-content/90 rounded-lg w-full border-0">Get
+                            Pro</a>
+                    </div>
+                </div>
+
+            </div>
+
+            <p class="text-center text-xs text-base-content/35 mt-8">
+                Simpler Tasks Lite is priced once, not forever. Comparable list apps like Todoist charge ongoing subscriptions —
+                often costing far more over a few years than our Pro + renewal combined.
+                Powered by Dexie Cloud and open source tools.
+            </p>
+        </div>
+    </section>
+
+    <!-- ───────────────── CTA ───────────────── -->
+    <section class="py-20 bg-base-100">
+        <div class="max-w-2xl mx-auto px-6 text-center">
+            <h2 class="text-4xl font-bold tracking-tight mb-4">Ready to get things done?</h2>
+            <p class="text-base-content/50 mb-8 text-base">Open SimplerToDo right now — no account, no setup, just
+                tasks.</p>
+            <a href="https://app.SimplerToDo.com" class="btn btn-primary btn-lg rounded-xl gap-2 px-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Open the app — it's free
+            </a>
+        </div>
+    </section>
+
+    <!-- ───────────────── FOOTER ───────────────── -->
+    <footer class="footer footer-center p-8 bg-base-200/60 text-base-content/40 text-sm border-t border-base-200">
+        <div class="flex flex-wrap gap-4 justify-center items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-md bg-primary flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-primary-content" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                </div>
+                <span class="font-semibold text-base-content/60">SimplerToDo</span>
+            </div>
+            <span class="hidden md:inline">·</span>
+            <a href="#" class="hover:text-base-content transition-colors">Privacy</a>
+            <a href="#" class="hover:text-base-content transition-colors">Terms</a>
+            <a href="/cdn-cgi/l/email-protection#82eae7eeeeedc2d1ebeff2eee7f0d6edc6edace1edef"
+                class="hover:text-base-content transition-colors">Contact</a>
+        </div>
+        <p class="mt-2">© 2026 SimplerToDo. Built with ♥ and Dexie Cloud.</p>
+    </footer>
+
+    <script>
+        // ── Theme Picker (theme already applied in head for no flash) ──
+        function applyTheme(t, ev) {
+            if (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+            }
+            if (!t) return;
+            document.documentElement.setAttribute('data-theme', t);
+            var sel = document.getElementById('theme-select');
+            if (sel) sel.value = t;
+            try { localStorage.setItem('theme', t); } catch (e) { }
+        }
+        (function () {
+            var saved = 'light';
+            try { saved = localStorage.getItem('theme') || 'light'; } catch (e) { }
+            document.documentElement.setAttribute('data-theme', saved);
+            var sel = document.getElementById('theme-select');
+            if (sel) sel.value = saved;
+        })();
+    </script>
+    <script>
+        // ── Interactive Task Demo ──
+        function toggleTask(el) {
+            const checkbox = el.querySelector('input[type="checkbox"]');
+            const taskSpan = el.querySelector('span');
+            checkbox.checked = !checkbox.checked;
+            taskSpan.classList.toggle('task-done', checkbox.checked);
+        }
+
+        function addTask(e) {
+            if (e.key === 'Enter') addTaskBtn();
+        }
+
+        function addTaskBtn() {
+            const input = document.getElementById('new-task-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const list = document.getElementById('task-list');
+            const div = document.createElement('div');
+            div.className = 'task-item flex items-center gap-3 p-2.5 rounded-lg bg-base-200/50 cursor-pointer check-animate';
+            div.onclick = function () { toggleTask(this); };
+            div.innerHTML = `
+        <input type="checkbox" class="checkbox checkbox-primary checkbox-sm" onclick="event.stopPropagation(); toggleTask(this.parentElement)" />
+        <span class="text-sm">${text.replace(/</g, '&lt;')}</span>
+      `;
+            list.appendChild(div);
+            input.value = '';
+        }
+
+        // ── Smooth scroll ──
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', e => {
+                const target = document.querySelector(a.getAttribute('href'));
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
