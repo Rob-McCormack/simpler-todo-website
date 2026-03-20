@@ -680,6 +680,15 @@
                 </svg>
                 Open the app — it's free
             </a>
+            <div class="mt-8 p-5 rounded-xl border border-base-200 bg-base-200/40">
+                <p class="text-sm text-base-content/70 mb-3">
+                    Support SimplerToDo development. Enter any amount you wish.
+                </p>
+                <a href="https://buymeacoffee.com/simplertasks" target="_blank" rel="noopener noreferrer"
+                    class="btn btn-outline rounded-lg">
+                    Buy Me a Coffee
+                </a>
+            </div>
         </div>
     </section>
 
@@ -697,13 +706,65 @@
                 <span class="font-semibold text-base-content/60">SimplerToDo</span>
             </div>
             <span class="hidden md:inline">·</span>
-            <a href="#" class="hover:text-base-content transition-colors">Privacy</a>
-            <a href="#" class="hover:text-base-content transition-colors">Terms</a>
-            <a href="/cdn-cgi/l/email-protection#82eae7eeeeedc2d1ebeff2eee7f0d6edc6edace1edef"
-                class="hover:text-base-content transition-colors">Contact</a>
+            <button type="button" class="hover:text-base-content transition-colors"
+                onclick="document.getElementById('privacy-dialog').showModal()">Privacy</button>
+            <button type="button" class="hover:text-base-content transition-colors"
+                onclick="document.getElementById('terms-dialog').showModal()">Terms</button>
+            <a href="mailto:simplertasks@gmail.com" class="hover:text-base-content transition-colors">Contact</a>
         </div>
-        <p class="mt-2">© 2026 SimplerToDo. Free, open source, and local-first.</p>
+        <p class="mt-2">© 2026 SimplerTasks Company. Built with ♥ on Github and hosted on CloudFlare.</p>
+        <p class="text-xs text-base-content/35">🇨🇦 Made in Canada : SimplerTasks Company</p>
     </footer>
+
+    <dialog id="privacy-dialog" class="modal">
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-xl mb-4">Privacy</h3>
+            <p class="text-sm leading-relaxed mb-3">
+                SimplerToDo does not collect, store, or sell your personal data.
+            </p>
+            <p class="text-sm leading-relaxed mb-3">
+                Your tasks stay on your device in local browser storage unless you choose to export them.
+            </p>
+            <p class="text-sm leading-relaxed">
+                Contact: <a href="mailto:simplertasks@gmail.com" class="link link-primary">simplertasks@gmail.com</a>
+            </p>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn">Close</button>
+                </form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+
+    <dialog id="terms-dialog" class="modal">
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-xl mb-4">Terms</h3>
+            <p class="text-sm leading-relaxed mb-3">
+                SimplerToDo is provided "as is", without warranties of any kind.
+            </p>
+            <p class="text-sm leading-relaxed mb-3">
+                You are responsible for keeping your own backups and for how you use exported data.
+            </p>
+            <p class="text-sm leading-relaxed mb-3">
+                The app and source code may be updated over time. Continued use means you accept these terms.
+            </p>
+            <p class="text-sm leading-relaxed">
+                For questions, contact
+                <a href="mailto:simplertasks@gmail.com" class="link link-primary">simplertasks@gmail.com</a>.
+            </p>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn">Close</button>
+                </form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
 
     <script>
         // ── Theme Picker (theme already applied in head for no flash) ──
