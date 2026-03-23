@@ -1,0 +1,11 @@
+# Cloudflare Pages — local dev: npx wrangler pages dev .
+# Production: bind KV + ANTHROPIC_API_KEY in the Pages project (Settings → Functions → KV / Variables).
+
+name = "simpler-todo-website"
+pages_build_output_dir = "."
+compatibility_date = "2025-03-01"
+
+[[kv_namespaces]]
+binding = "HELP_RATE_LIMIT"
+# Create in dashboard: Workers & Pages → KV → Create namespace, then paste id:
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"

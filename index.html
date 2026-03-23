@@ -154,10 +154,12 @@
                 <li><a href="#screenshots" class="rounded-lg font-medium">Screenshots</a></li>
                 <li><a href="#compare" class="rounded-lg font-medium">Data Ownership</a></li>
                 <li><a href="#pricing" class="rounded-lg font-medium">Open Source</a></li>
+                <li><a href="/help.html" class="rounded-lg font-medium">Help</a></li>
             </ul>
         </div>
         <div class="navbar-end gap-2 mr-2">
             <!-- Theme picker -->
+            <a href="/help.html" class="btn btn-ghost btn-sm rounded-lg md:hidden">Help</a>
             <select id="theme-select" class="select select-sm rounded-lg font-medium" title="Change theme"
                 onchange="applyTheme(this.value, event)">
                 <option value="light">Light</option>
@@ -710,6 +712,7 @@
                 onclick="document.getElementById('privacy-dialog').showModal()">Privacy</button>
             <button type="button" class="hover:text-base-content transition-colors"
                 onclick="document.getElementById('terms-dialog').showModal()">Terms</button>
+            <a href="/help.html" class="hover:text-base-content transition-colors">Help</a>
             <a href="mailto:simplertasks@gmail.com" class="hover:text-base-content transition-colors">Contact</a>
         </div>
         <p class="mt-2">© 2026 SimplerTasks Company. Built with ♥ on Github and hosted on CloudFlare.</p>
