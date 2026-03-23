@@ -68,6 +68,28 @@ function rateLimitKey(ip, date) {
   return `help:${ip}:${date}`;
 }
 
+/** Avoid Worker wall-clock timeout (edge returns HTML 502) if Anthropic is slow or hangs. */
+const ANTHROPIC_FETCH_MS = 55_000;
+
+async function fetchAnthropicMessages(apiKey, body) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), ANTHROPIC_FETCH_MS);
+  try {
+    return await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify(body),
+    });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 /**
  * Pages "Variables and Secrets" → string on env.
  * Secrets Store → binding with same name; value via await binding.get()
@@ -118,24 +140,29 @@ async function handlePost(context) {
     return jsonResponse({ error: `Message too long (max ${MAX_MESSAGE_LEN} characters).` }, 400);
   }
 
-  const kv = env.HELP_RATE_LIMIT;
+  let kv = env.HELP_RATE_LIMIT;
   let count = 0;
   let rateLimitKeyStr = "";
   if (kv) {
-    const ip = getClientIp(request);
-    const date = utcDateKey();
-    rateLimitKeyStr = rateLimitKey(ip, date);
-    const rawCount = await kv.get(rateLimitKeyStr);
-    count = parseInt(rawCount || "0", 10);
-    if (Number.isNaN(count) || count < 0) count = 0;
-    if (count >= MAX_PER_DAY) {
-      return jsonResponse(
-        {
-          error: "Daily question limit reached. Try again tomorrow (UTC) or use the FAQ and email below.",
-          remaining: 0,
-        },
-        429,
-      );
+    try {
+      const ip = getClientIp(request);
+      const date = utcDateKey();
+      rateLimitKeyStr = rateLimitKey(ip, date);
+      const rawCount = await kv.get(rateLimitKeyStr);
+      count = parseInt(rawCount || "0", 10);
+      if (Number.isNaN(count) || count < 0) count = 0;
+      if (count >= MAX_PER_DAY) {
+        return jsonResponse(
+          {
+            error: "Daily question limit reached. Try again tomorrow (UTC) or use the FAQ and email below.",
+            remaining: 0,
+          },
+          429,
+        );
+      }
+    } catch (e) {
+      console.error("help api: KV read failed; continuing without rate limit", e);
+      kv = null;
     }
   } else {
     console.warn(
@@ -143,22 +170,22 @@ async function handlePost(context) {
     );
   }
 
-  const model = env.ANTHROPIC_MODEL || "claude-haiku-4-5";
+  // Default: widely available Haiku. Override with ANTHROPIC_MODEL env (e.g. claude-haiku-4-5).
+  const model = env.ANTHROPIC_MODEL || "claude-3-5-haiku-20241022";
 
-  const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
+  let anthropicRes;
+  try {
+    anthropicRes = await fetchAnthropicMessages(apiKey, {
       model,
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: message }],
-    }),
-  });
+    });
+  } catch (e) {
+    const msg = e && e.name === "AbortError" ? "Request to assistant timed out. Try again." : "Could not reach assistant. Try again.";
+    console.error("help api: Anthropic fetch failed", e);
+    return jsonResponse({ error: msg }, 502);
+  }
 
   const anthropicText = await anthropicRes.text();
   let anthropicJson;
@@ -197,12 +224,16 @@ async function handlePost(context) {
   }
 
   if (kv) {
-    const next = count + 1;
-    await kv.put(rateLimitKeyStr, String(next), { expirationTtl: KV_TTL_SECONDS });
-    return jsonResponse({
-      answer,
-      remaining: Math.max(0, MAX_PER_DAY - next),
-    });
+    try {
+      const next = count + 1;
+      await kv.put(rateLimitKeyStr, String(next), { expirationTtl: KV_TTL_SECONDS });
+      return jsonResponse({
+        answer,
+        remaining: Math.max(0, MAX_PER_DAY - next),
+      });
+    } catch (e) {
+      console.error("help api: KV write failed; returning answer without updating count", e);
+    }
   }
 
   return jsonResponse({
@@ -213,6 +244,9 @@ async function handlePost(context) {
 
 export async function onRequest(context) {
   const { request } = context;
+  if (request.method === "GET") {
+    return jsonResponse({ ok: true, path: "/api/help" }, 200);
+  }
   if (request.method === "POST") {
     try {
       return await handlePost(context);

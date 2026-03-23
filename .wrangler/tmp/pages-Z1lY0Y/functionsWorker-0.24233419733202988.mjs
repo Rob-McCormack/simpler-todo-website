@@ -63,6 +63,26 @@ function rateLimitKey(ip, date) {
   return `help:${ip}:${date}`;
 }
 __name(rateLimitKey, "rateLimitKey");
+var ANTHROPIC_FETCH_MS = 55e3;
+async function fetchAnthropicMessages(apiKey, body) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), ANTHROPIC_FETCH_MS);
+  try {
+    return await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify(body)
+    });
+  } finally {
+    clearTimeout(t);
+  }
+}
+__name(fetchAnthropicMessages, "fetchAnthropicMessages");
 async function resolveAnthropicApiKey(env) {
   const v = env.ANTHROPIC_API_KEY;
   if (v == null) return "";
@@ -102,45 +122,49 @@ async function handlePost(context) {
   if (message.length > MAX_MESSAGE_LEN) {
     return jsonResponse({ error: `Message too long (max ${MAX_MESSAGE_LEN} characters).` }, 400);
   }
-  const kv = env.HELP_RATE_LIMIT;
+  let kv = env.HELP_RATE_LIMIT;
   let count = 0;
   let rateLimitKeyStr = "";
   if (kv) {
-    const ip = getClientIp(request);
-    const date = utcDateKey();
-    rateLimitKeyStr = rateLimitKey(ip, date);
-    const rawCount = await kv.get(rateLimitKeyStr);
-    count = parseInt(rawCount || "0", 10);
-    if (Number.isNaN(count) || count < 0) count = 0;
-    if (count >= MAX_PER_DAY) {
-      return jsonResponse(
-        {
-          error: "Daily question limit reached. Try again tomorrow (UTC) or use the FAQ and email below.",
-          remaining: 0
-        },
-        429
-      );
+    try {
+      const ip = getClientIp(request);
+      const date = utcDateKey();
+      rateLimitKeyStr = rateLimitKey(ip, date);
+      const rawCount = await kv.get(rateLimitKeyStr);
+      count = parseInt(rawCount || "0", 10);
+      if (Number.isNaN(count) || count < 0) count = 0;
+      if (count >= MAX_PER_DAY) {
+        return jsonResponse(
+          {
+            error: "Daily question limit reached. Try again tomorrow (UTC) or use the FAQ and email below.",
+            remaining: 0
+          },
+          429
+        );
+      }
+    } catch (e) {
+      console.error("help api: KV read failed; continuing without rate limit", e);
+      kv = null;
     }
   } else {
     console.warn(
       "help api: HELP_RATE_LIMIT KV not bound \u2014 rate limiting disabled. Add KV in wrangler.toml (see repo comment)."
     );
   }
-  const model = env.ANTHROPIC_MODEL || "claude-haiku-4-5";
-  const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01"
-    },
-    body: JSON.stringify({
+  const model = env.ANTHROPIC_MODEL || "claude-3-5-haiku-20241022";
+  let anthropicRes;
+  try {
+    anthropicRes = await fetchAnthropicMessages(apiKey, {
       model,
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: message }]
-    })
-  });
+    });
+  } catch (e) {
+    const msg = e && e.name === "AbortError" ? "Request to assistant timed out. Try again." : "Could not reach assistant. Try again.";
+    console.error("help api: Anthropic fetch failed", e);
+    return jsonResponse({ error: msg }, 502);
+  }
   const anthropicText = await anthropicRes.text();
   let anthropicJson;
   try {
@@ -172,12 +196,16 @@ async function handlePost(context) {
     return jsonResponse({ error: "Empty reply from assistant. Please try again." }, 502);
   }
   if (kv) {
-    const next = count + 1;
-    await kv.put(rateLimitKeyStr, String(next), { expirationTtl: KV_TTL_SECONDS });
-    return jsonResponse({
-      answer,
-      remaining: Math.max(0, MAX_PER_DAY - next)
-    });
+    try {
+      const next = count + 1;
+      await kv.put(rateLimitKeyStr, String(next), { expirationTtl: KV_TTL_SECONDS });
+      return jsonResponse({
+        answer,
+        remaining: Math.max(0, MAX_PER_DAY - next)
+      });
+    } catch (e) {
+      console.error("help api: KV write failed; returning answer without updating count", e);
+    }
   }
   return jsonResponse({
     answer,
@@ -187,6 +215,9 @@ async function handlePost(context) {
 __name(handlePost, "handlePost");
 async function onRequest(context) {
   const { request } = context;
+  if (request.method === "GET") {
+    return jsonResponse({ ok: true, path: "/api/help" }, 200);
+  }
   if (request.method === "POST") {
     try {
       return await handlePost(context);
@@ -710,7 +741,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-ED8ti7/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-fq02Px/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -742,7 +773,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-ED8ti7/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-fq02Px/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
