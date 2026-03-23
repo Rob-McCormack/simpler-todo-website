@@ -196,7 +196,17 @@ __name2(handlePost, "handlePost");
 async function onRequest(context) {
   const { request } = context;
   if (request.method === "POST") {
-    return handlePost(context);
+    try {
+      return await handlePost(context);
+    } catch (e) {
+      console.error("help api: unhandled error", e);
+      return jsonResponse(
+        {
+          error: "Something went wrong. Please try again or email simplertasks@gmail.com."
+        },
+        500
+      );
+    }
   }
   if (request.method === "OPTIONS") {
     return new Response(null, {

@@ -278,15 +278,22 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ message: msg }),
                     });
+                    var text = await res.text();
                     var data = {};
                     try {
-                        data = await res.json();
+                        data = text ? JSON.parse(text) : {};
                     } catch (parseErr) {
-                        throw new Error('Bad response from server.');
+                        var preview = (text || '').replace(/\s+/g, ' ').slice(0, 200);
+                        throw new Error(
+                            'Server did not return JSON (HTTP ' + res.status + '). ' +
+                            (preview ? preview : 'Empty response. If this persists, the /api/help route may be failing.')
+                        );
                     }
 
                     if (typeof data.remaining === 'number') {
                         remEl.textContent = data.remaining + ' question(s) remaining today (UTC).';
+                    } else {
+                        remEl.textContent = '';
                     }
 
                     if (!res.ok) {

@@ -188,7 +188,17 @@ __name(handlePost, "handlePost");
 async function onRequest(context) {
   const { request } = context;
   if (request.method === "POST") {
-    return handlePost(context);
+    try {
+      return await handlePost(context);
+    } catch (e) {
+      console.error("help api: unhandled error", e);
+      return jsonResponse(
+        {
+          error: "Something went wrong. Please try again or email simplertasks@gmail.com."
+        },
+        500
+      );
+    }
   }
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -700,7 +710,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-cl1HPa/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-ED8ti7/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -732,7 +742,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-cl1HPa/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-ED8ti7/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
