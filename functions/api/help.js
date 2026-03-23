@@ -1,7 +1,7 @@
 /**
  * POST /api/help — Claude proxy with KV rate limit (5/day per IP, UTC).
- * Env: ANTHROPIC_API_KEY (required) — plain string from Pages Variables, OR Secrets Store binding (async .get()).
- * Optional: ANTHROPIC_MODEL, HELP_RATE_LIMIT (KV).
+ * Env: ANTHROPIC_API_KEY (required) — Pages encrypted secret or wrangler pages secret.
+ * Optional: ANTHROPIC_MODEL, HELP_RATE_LIMIT (KV). Without KV, rate limiting is skipped (Anthropic spend cap still applies).
  */
 
 const MAX_PER_DAY = 5;
@@ -103,10 +103,6 @@ async function handlePost(context) {
     return jsonResponse({ error: "Help assistant is not configured." }, 503);
   }
 
-  if (!env.HELP_RATE_LIMIT) {
-    return jsonResponse({ error: "Rate limit store is not configured." }, 503);
-  }
-
   let body;
   try {
     body = await request.json();
@@ -122,20 +118,28 @@ async function handlePost(context) {
     return jsonResponse({ error: `Message too long (max ${MAX_MESSAGE_LEN} characters).` }, 400);
   }
 
-  const ip = getClientIp(request);
-  const date = utcDateKey();
-  const key = rateLimitKey(ip, date);
-
-  const rawCount = await env.HELP_RATE_LIMIT.get(key);
-  let count = parseInt(rawCount || "0", 10);
-  if (Number.isNaN(count) || count < 0) count = 0;
-  if (count >= MAX_PER_DAY) {
-    return jsonResponse(
-      {
-        error: "Daily question limit reached. Try again tomorrow (UTC) or use the FAQ and email below.",
-        remaining: 0,
-      },
-      429,
+  const kv = env.HELP_RATE_LIMIT;
+  let count = 0;
+  let rateLimitKeyStr = "";
+  if (kv) {
+    const ip = getClientIp(request);
+    const date = utcDateKey();
+    rateLimitKeyStr = rateLimitKey(ip, date);
+    const rawCount = await kv.get(rateLimitKeyStr);
+    count = parseInt(rawCount || "0", 10);
+    if (Number.isNaN(count) || count < 0) count = 0;
+    if (count >= MAX_PER_DAY) {
+      return jsonResponse(
+        {
+          error: "Daily question limit reached. Try again tomorrow (UTC) or use the FAQ and email below.",
+          remaining: 0,
+        },
+        429,
+      );
+    }
+  } else {
+    console.warn(
+      "help api: HELP_RATE_LIMIT KV not bound — rate limiting disabled. Add KV in wrangler.toml (see repo comment).",
     );
   }
 
@@ -192,12 +196,18 @@ async function handlePost(context) {
     return jsonResponse({ error: "Empty reply from assistant. Please try again." }, 502);
   }
 
-  const next = count + 1;
-  await env.HELP_RATE_LIMIT.put(key, String(next), { expirationTtl: KV_TTL_SECONDS });
+  if (kv) {
+    const next = count + 1;
+    await kv.put(rateLimitKeyStr, String(next), { expirationTtl: KV_TTL_SECONDS });
+    return jsonResponse({
+      answer,
+      remaining: Math.max(0, MAX_PER_DAY - next),
+    });
+  }
 
   return jsonResponse({
     answer,
-    remaining: Math.max(0, MAX_PER_DAY - next),
+    remaining: null,
   });
 }
 

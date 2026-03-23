@@ -8,10 +8,11 @@
 #     → Production → Add → name ANTHROPIC_API_KEY → Encrypt → paste API key → Save → redeploy.
 #   • Or CLI: npx wrangler pages secret put ANTHROPIC_API_KEY --project-name=simpler-todo-website
 #
-# KV: uncomment with your real namespace id (Workers & Pages → KV).
+# KV (recommended): 5/day rate limit per IP. Create: Workers & Pages → KV → Create namespace.
+# Copy the namespace ID, uncomment below, paste id, commit, deploy.
 # [[kv_namespaces]]
 # binding = "HELP_RATE_LIMIT"
-# id = "YOUR_KV_NAMESPACE_ID"
+# id = "paste-your-kv-namespace-id-here"
 
 name = "simpler-todo-website"
 pages_build_output_dir = "."
