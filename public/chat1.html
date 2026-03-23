@@ -53,6 +53,7 @@
         <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off">
         <button type="button" onclick="sendMessage()">Send</button>
     </div>
+    <p style="font-size:0.8rem;color:#666;margin-top:10px">If every try returns HTML, your zone WAF is blocking the API before the Worker runs. Set <code>data-chat-api</code> on <code>&lt;html&gt;</code> to a deployed <code>workers/chat-proxy</code> URL, or add a WAF skip for <code>/api/v1/*</code> in the Cloudflare dashboard.</p>
 
     <script>
         function apiBase() {
@@ -61,14 +62,21 @@
             return a;
         }
 
+        function utf8ToB64Url(s) {
+            var u8 = new TextEncoder().encode(s);
+            var bin = '';
+            for (var i = 0; i < u8.length; i++) bin += String.fromCharCode(u8[i]);
+            return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        }
+
         function appendLine(className, label, text, color) {
             var box = document.getElementById('chat-box');
             var div = document.createElement('div');
             div.className = className;
             if (color) div.style.color = color;
-            var b = document.createElement('b');
-            b.textContent = label;
-            div.appendChild(b);
+            var bold = document.createElement('b');
+            bold.textContent = label;
+            div.appendChild(bold);
             div.appendChild(document.createTextNode(text));
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
@@ -76,33 +84,101 @@
 
         async function sendMessage() {
             var input = document.getElementById('user-input');
-            var userMsg = (input.value || '').trim();
-            if (!userMsg) return;
+            var text = (input.value || '').trim();
+            if (!text) return;
 
-            appendLine('user', 'You: ', userMsg);
+            if (text.length > 2000) {
+                appendLine('ai', 'Error: ', 'Message too long (max 2000).', 'red');
+                return;
+            }
+
+            appendLine('user', 'You: ', text);
             input.value = '';
 
             var base = apiBase();
             var mode = base ? 'cors' : 'same-origin';
-            var url = (base || '') + '/api/v1/chat';
+            function u(path) {
+                return base ? base + path : path;
+            }
+
+            var b = utf8ToB64Url(text);
+            var attempts = [
+                function () {
+                    return fetch(u('/api/v1/c'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ b: b }),
+                        mode: mode,
+                    });
+                },
+                function () {
+                    return fetch(u('/api/v1/c'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                        body: text,
+                        mode: mode,
+                    });
+                },
+                function () {
+                    return fetch(u('/api/v1/c'), {
+                        method: 'GET',
+                        headers: { 'X-Chat-B': b },
+                        mode: mode,
+                    });
+                },
+                function () {
+                    return fetch(u('/api/v1/chat'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ b: b }),
+                        mode: mode,
+                    });
+                },
+                function () {
+                    return fetch(u('/api/v1/chat'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                        body: text,
+                        mode: mode,
+                    });
+                },
+                function () {
+                    return fetch(u('/api/v1/chat'), {
+                        method: 'GET',
+                        headers: { 'X-Chat-B': b },
+                        mode: mode,
+                    });
+                },
+            ];
 
             try {
-                var response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: userMsg }),
-                    mode: mode,
-                });
-                var raw = await response.text();
-                var data = {};
-                try {
-                    data = raw ? JSON.parse(raw) : {};
-                } catch (e) {
-                    appendLine('ai', 'Error: ', 'Not JSON (often Cloudflare WAF). First chars: ' + raw.slice(0, 120), 'red');
+                var postRes = null;
+                var raw = '';
+                var data = null;
+                var lastParseErr = null;
+                for (var i = 0; i < attempts.length; i++) {
+                    postRes = await attempts[i]();
+                    raw = await postRes.text();
+                    try {
+                        data = raw ? JSON.parse(raw) : {};
+                        lastParseErr = null;
+                        break;
+                    } catch (parseErr) {
+                        lastParseErr = parseErr;
+                    }
+                }
+                if (lastParseErr) {
+                    appendLine(
+                        'ai',
+                        'Error: ',
+                        'All 6 requests returned non-JSON (Cloudflare HTML = WAF before Worker). Set data-chat-api to workers.dev proxy or WAF skip for /api/v1/*. Snippet: ' +
+                            raw.slice(0, 100),
+                        'red',
+                    );
                     return;
                 }
-                if (!response.ok) {
-                    appendLine('ai', 'Error: ', data.error || ('HTTP ' + response.status), 'red');
+                if (!postRes.ok) {
+                    appendLine('ai', 'Error: ', data.error || ('HTTP ' + postRes.status), 'red');
                     return;
                 }
                 appendLine('ai', 'Claude: ', data.answer || '(empty)');
