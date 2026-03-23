@@ -135,67 +135,70 @@
 <body class="min-h-screen bg-base-100 text-base-content">
 
     <!-- ───────────────── NAVBAR ───────────────── -->
-    <div class="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-50 border-b border-base-200">
-        <div class="navbar-start">
-            <a href="/" class="flex items-center gap-2 ml-2">
-                <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary-content" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                </div>
-                <span class="font-semibold text-base tracking-tight">SimplerToDo</span>
-            </a>
+    <div class="sticky top-0 z-50 border-b border-base-200 bg-base-100/80 backdrop-blur-md">
+        <div class="navbar min-h-0">
+            <div class="navbar-start">
+                <a href="/" class="flex items-center gap-2 ml-2">
+                    <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary-content" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    </div>
+                    <span class="font-semibold text-base tracking-tight">SimplerToDo</span>
+                </a>
+            </div>
+            <div class="navbar-center hidden md:flex">
+                <ul class="menu menu-horizontal gap-1 text-sm">
+                    <li><a href="#features" class="rounded-lg font-medium">Features</a></li>
+                    <li><a href="#screenshots" class="rounded-lg font-medium">Screenshots</a></li>
+                    <li><a href="#compare" class="rounded-lg font-medium">Data Ownership</a></li>
+                    <li><a href="#pricing" class="rounded-lg font-medium">Open Source</a></li>
+                </ul>
+            </div>
+            <div class="navbar-end gap-2 mr-2">
+                <!-- Theme picker -->
+                <select id="theme-select" class="select select-sm rounded-lg font-medium" title="Change theme"
+                    onchange="applyTheme(this.value, event)">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="cupcake">Cupcake</option>
+                    <option value="bumblebee">Bumblebee</option>
+                    <option value="emerald">Emerald</option>
+                    <option value="corporate">Corporate</option>
+                    <option value="synthwave">Synthwave</option>
+                    <option value="retro">Retro</option>
+                    <option value="cyberpunk">Cyberpunk</option>
+                    <option value="valentine">Valentine</option>
+                    <option value="halloween">Halloween</option>
+                    <option value="garden">Garden</option>
+                    <option value="forest">Forest</option>
+                    <option value="aqua">Aqua</option>
+                    <option value="lofi">Lofi</option>
+                    <option value="pastel">Pastel</option>
+                    <option value="fantasy">Fantasy</option>
+                    <option value="wireframe">Wireframe</option>
+                    <option value="black">Black</option>
+                    <option value="luxury">Luxury</option>
+                    <option value="dracula">Dracula</option>
+                    <option value="cmyk">CMYK</option>
+                    <option value="autumn">Autumn</option>
+                    <option value="business">Business</option>
+                    <option value="acid">Acid</option>
+                    <option value="lemonade">Lemonade</option>
+                    <option value="night">Night</option>
+                    <option value="coffee">Coffee</option>
+                    <option value="winter">Winter</option>
+                    <option value="dim">Dim</option>
+                    <option value="nord">Nord</option>
+                    <option value="sunset">Sunset</option>
+                </select>
+                <a href="https://app.simplertodo.com/" class="btn btn-primary btn-sm rounded-lg">Get Started</a>
+            </div>
         </div>
-        <div class="navbar-center hidden md:flex">
-            <ul class="menu menu-horizontal gap-1 text-sm">
-                <li><a href="#features" class="rounded-lg font-medium">Features</a></li>
-                <li><a href="#screenshots" class="rounded-lg font-medium">Screenshots</a></li>
-                <li><a href="#compare" class="rounded-lg font-medium">Data Ownership</a></li>
-                <li><a href="#pricing" class="rounded-lg font-medium">Open Source</a></li>
-                <li><a href="/help.html" class="rounded-lg font-medium">Help</a></li>
-            </ul>
-        </div>
-        <div class="navbar-end gap-2 mr-2">
-            <!-- Theme picker -->
-            <a href="/help.html" class="btn btn-ghost btn-sm rounded-lg md:hidden">Help</a>
-            <select id="theme-select" class="select select-sm rounded-lg font-medium" title="Change theme"
-                onchange="applyTheme(this.value, event)">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="cupcake">Cupcake</option>
-                <option value="bumblebee">Bumblebee</option>
-                <option value="emerald">Emerald</option>
-                <option value="corporate">Corporate</option>
-                <option value="synthwave">Synthwave</option>
-                <option value="retro">Retro</option>
-                <option value="cyberpunk">Cyberpunk</option>
-                <option value="valentine">Valentine</option>
-                <option value="halloween">Halloween</option>
-                <option value="garden">Garden</option>
-                <option value="forest">Forest</option>
-                <option value="aqua">Aqua</option>
-                <option value="lofi">Lofi</option>
-                <option value="pastel">Pastel</option>
-                <option value="fantasy">Fantasy</option>
-                <option value="wireframe">Wireframe</option>
-                <option value="black">Black</option>
-                <option value="luxury">Luxury</option>
-                <option value="dracula">Dracula</option>
-                <option value="cmyk">CMYK</option>
-                <option value="autumn">Autumn</option>
-                <option value="business">Business</option>
-                <option value="acid">Acid</option>
-                <option value="lemonade">Lemonade</option>
-                <option value="night">Night</option>
-                <option value="coffee">Coffee</option>
-                <option value="winter">Winter</option>
-                <option value="dim">Dim</option>
-                <option value="nord">Nord</option>
-                <option value="sunset">Sunset</option>
-            </select>
-            <a href="https://app.simplertodo.com/" class="btn btn-primary btn-sm rounded-lg">Get Started</a>
+        <div class="max-w-6xl mx-auto px-6 py-2 flex justify-center md:justify-start border-t border-base-200/70">
+            <a href="/help.html" class="text-sm font-medium link link-primary">Chat Agent</a>
         </div>
     </div>
 
