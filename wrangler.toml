@@ -1,11 +1,13 @@
-# Cloudflare Pages — local dev: npx wrangler pages dev .
-# Production: bind KV + ANTHROPIC_API_KEY in the Pages project (Settings → Functions → KV / Variables).
+# Cloudflare Pages — build output is this directory (static + functions/).
+# Do NOT put placeholder KV IDs here; deploy will fail validation.
+#
+# Production: Pages → your project → Settings → Functions:
+#   - KV namespace: create one, bind as HELP_RATE_LIMIT (same name as in functions/api/help.js)
+#   - Variables/secrets: ANTHROPIC_API_KEY (and optional ANTHROPIC_MODEL)
+#
+# Local: npx wrangler pages dev .
+# Optional: add [[kv_namespaces]] below only after you have a real namespace id from the dashboard.
 
 name = "simpler-todo-website"
 pages_build_output_dir = "."
 compatibility_date = "2025-03-01"
-
-[[kv_namespaces]]
-binding = "HELP_RATE_LIMIT"
-# Create in dashboard: Workers & Pages → KV → Create namespace, then paste id:
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
