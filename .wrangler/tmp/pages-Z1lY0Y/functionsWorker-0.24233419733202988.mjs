@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// api/chat.js
+// api/v1/chat.js
 var DEFAULT_MODEL = "claude-3-5-haiku-20241022";
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -16,7 +16,7 @@ __name(json, "json");
 async function onRequest(context) {
   const { request, env } = context;
   if (request.method === "GET") {
-    return json({ ok: true, route: "/api/chat" });
+    return json({ ok: true, route: "/api/v1/chat" });
   }
   if (request.method !== "POST") {
     return json({ error: "Use POST" }, 405);
@@ -26,14 +26,15 @@ async function onRequest(context) {
     if (!key) {
       return json(
         {
-          error: "ANTHROPIC_API_KEY is not set. In Cloudflare: Pages project \u2192 Settings \u2192 Variables and Secrets \u2192 Production \u2192 add encrypted secret with that exact name."
+          error: "ANTHROPIC_API_KEY is not set on this Pages project (Variables and Secrets \u2192 Production)."
         },
         503
       );
     }
+    const rawBody = await request.text();
     let body;
     try {
-      body = await request.json();
+      body = rawBody ? JSON.parse(rawBody) : {};
     } catch {
       return json({ error: "Invalid JSON body." }, 400);
     }
@@ -42,45 +43,35 @@ async function onRequest(context) {
       return json({ error: "Missing message." }, 400);
     }
     const model = typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim() || DEFAULT_MODEL;
-    const fetchOpts = {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 1024,
-        system: "You are a helpful assistant for SimplerToDo. Be brief.",
-        messages: [{ role: "user", content: message }]
-      })
-    };
-    if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
-      fetchOpts.signal = AbortSignal.timeout(6e4);
-    }
     let res;
     try {
-      res = await fetch("https://api.anthropic.com/v1/messages", fetchOpts);
+      res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 1024,
+          system: "You are a helpful assistant for SimplerToDo. Be brief.",
+          messages: [{ role: "user", content: message }]
+        })
+      });
     } catch (e) {
       console.error("chat fetch", e);
-      const msg = e && (e.name === "TimeoutError" || e.name === "AbortError") ? "Request to Claude timed out." : "Could not reach Claude API.";
-      return json({ error: msg }, 502);
+      return json({ error: "Could not reach Claude API." }, 502);
     }
     const raw = await res.text();
     let data;
     try {
       data = JSON.parse(raw);
     } catch {
-      return json({ error: "Claude returned non-JSON (check model name and API key)." }, 502);
+      return json({ error: "Claude returned non-JSON (check API key and model)." }, 502);
     }
     if (!res.ok) {
-      return json(
-        {
-          error: data.error?.message || `Claude API HTTP ${res.status}`
-        },
-        502
-      );
+      return json({ error: data.error?.message || `Claude API HTTP ${res.status}` }, 502);
     }
     let text = "";
     for (const block of data.content || []) {
@@ -97,8 +88,8 @@ __name(onRequest, "onRequest");
 // ../.wrangler/tmp/pages-Z1lY0Y/functionsRoutes-0.11351285082364881.mjs
 var routes = [
   {
-    routePath: "/api/chat",
-    mountPath: "/api",
+    routePath: "/api/v1/chat",
+    mountPath: "/api/v1",
     method: "",
     middlewares: [],
     modules: [onRequest]
@@ -592,7 +583,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-aVjche/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-pzcnPD/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -624,7 +615,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-aVjche/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-pzcnPD/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

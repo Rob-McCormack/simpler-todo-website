@@ -67,7 +67,7 @@
             input.value = '';
             log.textContent += 'You: ' + text + '\n\n';
             try {
-                var res = await fetch('/api/chat', {
+                var res = await fetch('/api/v1/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: text }),

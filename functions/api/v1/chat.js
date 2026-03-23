@@ -1,6 +1,7 @@
 /**
- * /api/chat — POST JSON { message } → { answer } or { error }.
- * Env: ANTHROPIC_API_KEY (Pages → Variables and Secrets → Production, encrypted).
+ * POST /api/v1/chat — JSON { message } → { answer } or { error }.
+ * (Path avoids /api/chat which some Cloudflare WAF/bot rules treat differently than GET.)
+ * Env: ANTHROPIC_API_KEY (Pages → Variables and Secrets → Production).
  * Optional: ANTHROPIC_MODEL
  */
 
@@ -20,7 +21,7 @@ export async function onRequest(context) {
   const { request, env } = context;
 
   if (request.method === "GET") {
-    return json({ ok: true, route: "/api/chat" });
+    return json({ ok: true, route: "/api/v1/chat" });
   }
 
   if (request.method !== "POST") {
@@ -33,15 +34,16 @@ export async function onRequest(context) {
       return json(
         {
           error:
-            "ANTHROPIC_API_KEY is not set. In Cloudflare: Pages project → Settings → Variables and Secrets → Production → add encrypted secret with that exact name.",
+            "ANTHROPIC_API_KEY is not set on this Pages project (Variables and Secrets → Production).",
         },
         503,
       );
     }
 
+    const rawBody = await request.text();
     let body;
     try {
-      body = await request.json();
+      body = rawBody ? JSON.parse(rawBody) : {};
     } catch {
       return json({ error: "Invalid JSON body." }, 400);
     }
@@ -53,35 +55,25 @@ export async function onRequest(context) {
 
     const model = (typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim()) || DEFAULT_MODEL;
 
-    const fetchOpts = {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 1024,
-        system: "You are a helpful assistant for SimplerToDo. Be brief.",
-        messages: [{ role: "user", content: message }],
-      }),
-    };
-
-    if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
-      fetchOpts.signal = AbortSignal.timeout(60_000);
-    }
-
     let res;
     try {
-      res = await fetch("https://api.anthropic.com/v1/messages", fetchOpts);
+      res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 1024,
+          system: "You are a helpful assistant for SimplerToDo. Be brief.",
+          messages: [{ role: "user", content: message }],
+        }),
+      });
     } catch (e) {
       console.error("chat fetch", e);
-      const msg =
-        e && (e.name === "TimeoutError" || e.name === "AbortError")
-          ? "Request to Claude timed out."
-          : "Could not reach Claude API.";
-      return json({ error: msg }, 502);
+      return json({ error: "Could not reach Claude API." }, 502);
     }
 
     const raw = await res.text();
@@ -89,16 +81,11 @@ export async function onRequest(context) {
     try {
       data = JSON.parse(raw);
     } catch {
-      return json({ error: "Claude returned non-JSON (check model name and API key)." }, 502);
+      return json({ error: "Claude returned non-JSON (check API key and model)." }, 502);
     }
 
     if (!res.ok) {
-      return json(
-        {
-          error: data.error?.message || `Claude API HTTP ${res.status}`,
-        },
-        502,
-      );
+      return json({ error: data.error?.message || `Claude API HTTP ${res.status}` }, 502);
     }
 
     let text = "";

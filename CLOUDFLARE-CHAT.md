@@ -10,8 +10,10 @@ Official references:
 
 ## What this repo does
 
-- `public/chat.html` — simple browser UI; it `POST`s JSON to `/api/chat`.
-- `functions/api/chat.js` — Pages Function at `/api/chat`; it calls Anthropic with `ANTHROPIC_API_KEY`.
+- `public/chat.html` — simple browser UI; it `POST`s JSON to `/api/v1/chat`.
+- `functions/api/v1/chat.js` — Pages Function at `/api/v1/chat`; it calls Anthropic with `ANTHROPIC_API_KEY`.
+
+(The path is `/api/v1/chat` instead of `/api/chat` so POST is less likely to be blocked by some WAF/bot rules that still allow GET on `/api/chat`.)
 
 ## What you do in Cloudflare (checklist)
 
@@ -28,7 +30,7 @@ Official references:
 4. **Save** and **trigger a new deployment** (push a commit or **Retry deployment**).
 5. **Test**
    - Open `https://YOUR_DOMAIN/chat.html`
-   - Or `GET https://YOUR_DOMAIN/api/chat` → should return JSON `{"ok":true}`
+   - Or `GET https://YOUR_DOMAIN/api/v1/chat` → should return JSON `{"ok":true,"route":"/api/v1/chat"}`
 
 ## Local preview (optional)
 
@@ -50,7 +52,7 @@ If unset, the Worker uses `claude-3-5-haiku-20241022`.
 
 ## If you see HTTP 502 (HTML error page)
 
-1. **GET** `https://YOUR_DOMAIN/api/chat` in the browser — you should see JSON `{"ok":true,...}`.
-   - If **GET is also 502**, the **Function** isn’t running or the **build output** is wrong (e.g. build output directory must be **`public`**).
-2. **POST** returns **JSON** errors from our Worker (e.g. missing key, bad model) — if you still get **HTML** 502, **Workers & Pages** → your project → **Logs** / **Real-time logs** while submitting the form.
-3. Confirm **`ANTHROPIC_API_KEY`** is on the **Pages** project (**Variables and Secrets** → **Production**), then **redeploy** after saving.
+1. **GET** `https://YOUR_DOMAIN/api/v1/chat` — JSON `{"ok":true,...}` means the Function is deployed.
+2. If **GET works but POST returns HTML 502**, check **Security** → **Events** / **WAF** / **Bots** in the Cloudflare dashboard for blocks on `POST` to `/api/*`. Temporarily relax **Bot Fight Mode** or add a **WAF exception** for `/api/v1/chat` (or your whole zone’s API path) and test again.
+3. **Workers & Pages** → your project → **Logs** while sending a chat message.
+4. Confirm **`ANTHROPIC_API_KEY`** is on the **Pages** project → **Variables and Secrets** → **Production**, then **redeploy**.

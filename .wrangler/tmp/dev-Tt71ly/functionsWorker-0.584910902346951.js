@@ -19,7 +19,7 @@ __name2(json, "json");
 async function onRequest(context) {
   const { request, env } = context;
   if (request.method === "GET") {
-    return json({ ok: true, route: "/api/chat" });
+    return json({ ok: true, route: "/api/v1/chat" });
   }
   if (request.method !== "POST") {
     return json({ error: "Use POST" }, 405);
@@ -29,14 +29,15 @@ async function onRequest(context) {
     if (!key) {
       return json(
         {
-          error: "ANTHROPIC_API_KEY is not set. In Cloudflare: Pages project \u2192 Settings \u2192 Variables and Secrets \u2192 Production \u2192 add encrypted secret with that exact name."
+          error: "ANTHROPIC_API_KEY is not set on this Pages project (Variables and Secrets \u2192 Production)."
         },
         503
       );
     }
+    const rawBody = await request.text();
     let body;
     try {
-      body = await request.json();
+      body = rawBody ? JSON.parse(rawBody) : {};
     } catch {
       return json({ error: "Invalid JSON body." }, 400);
     }
@@ -45,45 +46,35 @@ async function onRequest(context) {
       return json({ error: "Missing message." }, 400);
     }
     const model = typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim() || DEFAULT_MODEL;
-    const fetchOpts = {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 1024,
-        system: "You are a helpful assistant for SimplerToDo. Be brief.",
-        messages: [{ role: "user", content: message }]
-      })
-    };
-    if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
-      fetchOpts.signal = AbortSignal.timeout(6e4);
-    }
     let res;
     try {
-      res = await fetch("https://api.anthropic.com/v1/messages", fetchOpts);
+      res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 1024,
+          system: "You are a helpful assistant for SimplerToDo. Be brief.",
+          messages: [{ role: "user", content: message }]
+        })
+      });
     } catch (e) {
       console.error("chat fetch", e);
-      const msg = e && (e.name === "TimeoutError" || e.name === "AbortError") ? "Request to Claude timed out." : "Could not reach Claude API.";
-      return json({ error: msg }, 502);
+      return json({ error: "Could not reach Claude API." }, 502);
     }
     const raw = await res.text();
     let data;
     try {
       data = JSON.parse(raw);
     } catch {
-      return json({ error: "Claude returned non-JSON (check model name and API key)." }, 502);
+      return json({ error: "Claude returned non-JSON (check API key and model)." }, 502);
     }
     if (!res.ok) {
-      return json(
-        {
-          error: data.error?.message || `Claude API HTTP ${res.status}`
-        },
-        502
-      );
+      return json({ error: data.error?.message || `Claude API HTTP ${res.status}` }, 502);
     }
     let text = "";
     for (const block of data.content || []) {
@@ -99,8 +90,8 @@ __name(onRequest, "onRequest");
 __name2(onRequest, "onRequest");
 var routes = [
   {
-    routePath: "/api/chat",
-    mountPath: "/api",
+    routePath: "/api/v1/chat",
+    mountPath: "/api/v1",
     method: "",
     middlewares: [],
     modules: [onRequest]
