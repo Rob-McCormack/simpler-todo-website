@@ -12,7 +12,7 @@ const MAX_MESSAGE = 2000;
 const CORS_HEADERS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, OPTIONS",
-  "access-control-allow-headers": "content-type",
+  "access-control-allow-headers": "content-type, x-chat-b",
 };
 
 function json(data, status = 200) {
@@ -140,18 +140,27 @@ async function completeChat(env, message) {
   }
 }
 
-function messageFromGetUrl(url) {
+function messageFromB64Param(b, label) {
+  const decoded = decodeB64Url(b);
+  if (decoded === null) {
+    return { error: json({ error: `Invalid ${label} (base64url UTF-8).` }, 400) };
+  }
+  const msg = decoded.trim();
+  if (!msg) {
+    return { error: json({ error: "Empty message." }, 400) };
+  }
+  return { message: msg };
+}
+
+/** GET: prefer header (short URL, WAF-friendly); then ?b=; avoid ?message= when possible. */
+function messageFromGet(url, request) {
+  const headerB = (request.headers.get("x-chat-b") || "").trim();
+  if (headerB) {
+    return messageFromB64Param(headerB, "X-Chat-B");
+  }
   if (url.searchParams.has("b")) {
     const b = url.searchParams.get("b") ?? "";
-    const decoded = decodeB64Url(b);
-    if (decoded === null) {
-      return { error: json({ error: "Invalid b (base64url UTF-8)." }, 400) };
-    }
-    const msg = decoded.trim();
-    if (!msg) {
-      return { error: json({ error: "Empty message." }, 400) };
-    }
-    return { message: msg };
+    return messageFromB64Param(b, "b");
   }
   const plain = (url.searchParams.get("t") || url.searchParams.get("message") || "").trim();
   return { message: plain };
@@ -173,7 +182,7 @@ export async function onRequest(context) {
   const url = new URL(request.url);
 
   if (request.method === "GET") {
-    const parsed = messageFromGetUrl(url);
+    const parsed = messageFromGet(url, request);
     if (parsed.error) return parsed.error;
     if (parsed.message) {
       try {
@@ -186,7 +195,8 @@ export async function onRequest(context) {
     return json({
       ok: true,
       route: "/api/v1/chat",
-      hint: "WAF often blocks ?message=…. Use ?b=<base64url UTF-8> (chat.html does this) or POST.",
+      hint:
+        "WAF often blocks ?message= or long ?b=. Prefer POST JSON {message} or GET with header X-Chat-B: <base64url>.",
     });
   }
 

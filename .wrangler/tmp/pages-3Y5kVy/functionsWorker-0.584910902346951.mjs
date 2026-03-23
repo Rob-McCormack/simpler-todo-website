@@ -8,7 +8,7 @@ var MAX_MESSAGE = 2e3;
 var CORS_HEADERS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, OPTIONS",
-  "access-control-allow-headers": "content-type"
+  "access-control-allow-headers": "content-type, x-chat-b"
 };
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -125,23 +125,31 @@ async function completeChat(env, message) {
   }
 }
 __name(completeChat, "completeChat");
-function messageFromGetUrl(url) {
+function messageFromB64Param(b, label) {
+  const decoded = decodeB64Url(b);
+  if (decoded === null) {
+    return { error: json({ error: `Invalid ${label} (base64url UTF-8).` }, 400) };
+  }
+  const msg = decoded.trim();
+  if (!msg) {
+    return { error: json({ error: "Empty message." }, 400) };
+  }
+  return { message: msg };
+}
+__name(messageFromB64Param, "messageFromB64Param");
+function messageFromGet(url, request) {
+  const headerB = (request.headers.get("x-chat-b") || "").trim();
+  if (headerB) {
+    return messageFromB64Param(headerB, "X-Chat-B");
+  }
   if (url.searchParams.has("b")) {
     const b = url.searchParams.get("b") ?? "";
-    const decoded = decodeB64Url(b);
-    if (decoded === null) {
-      return { error: json({ error: "Invalid b (base64url UTF-8)." }, 400) };
-    }
-    const msg = decoded.trim();
-    if (!msg) {
-      return { error: json({ error: "Empty message." }, 400) };
-    }
-    return { message: msg };
+    return messageFromB64Param(b, "b");
   }
   const plain = (url.searchParams.get("t") || url.searchParams.get("message") || "").trim();
   return { message: plain };
 }
-__name(messageFromGetUrl, "messageFromGetUrl");
+__name(messageFromGet, "messageFromGet");
 async function onRequest(context) {
   const { request, env } = context;
   if (request.method === "OPTIONS") {
@@ -155,7 +163,7 @@ async function onRequest(context) {
   }
   const url = new URL(request.url);
   if (request.method === "GET") {
-    const parsed = messageFromGetUrl(url);
+    const parsed = messageFromGet(url, request);
     if (parsed.error) return parsed.error;
     if (parsed.message) {
       try {
@@ -168,7 +176,7 @@ async function onRequest(context) {
     return json({
       ok: true,
       route: "/api/v1/chat",
-      hint: "WAF often blocks ?message=\u2026. Use ?b=<base64url UTF-8> (chat.html does this) or POST."
+      hint: "WAF often blocks ?message= or long ?b=. Prefer POST JSON {message} or GET with header X-Chat-B: <base64url>."
     });
   }
   if (request.method !== "POST") {
@@ -689,7 +697,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-qsaEWL/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-6ZAj58/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -721,7 +729,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-qsaEWL/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-6ZAj58/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

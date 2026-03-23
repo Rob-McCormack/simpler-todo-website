@@ -54,7 +54,7 @@
         <button type="submit">Send</button>
     </form>
     <p id="err"></p>
-    <p style="font-size:0.8rem;color:#666;margin-top:1rem">Sends GET with <code>b</code> = base64 (not <code>message=</code>) so Cloudflare WAF doesn’t block the URL. Don’t paste secrets.</p>
+    <p style="font-size:0.8rem;color:#666;margin-top:1rem">Uses POST JSON first; if the edge returns HTML (e.g. WAF 502), retries GET with <code>X-Chat-B</code> (base64url) so the URL stays short. Don’t paste secrets.</p>
 
     <script>
         function utf8ToB64Url(s) {
@@ -62,6 +62,10 @@
             var bin = '';
             for (var i = 0; i < u8.length; i++) bin += String.fromCharCode(u8[i]);
             return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        }
+        function looksLikeHtml(s) {
+            var t = (s || '').trimStart().slice(0, 20).toLowerCase();
+            return t.indexOf('<!doctype') === 0 || t.indexOf('<html') === 0;
         }
         var log = document.getElementById('log');
         var err = document.getElementById('err');
@@ -74,25 +78,36 @@
             input.value = '';
             log.textContent += 'You: ' + text + '\n\n';
             try {
-                if (text.length > 1200) {
-                    err.textContent = 'Message too long (max ~1200 characters for this page).';
+                if (text.length > 2000) {
+                    err.textContent = 'Message too long (max 2000 characters).';
                     return;
                 }
-                var b = utf8ToB64Url(text);
-                var res = await fetch('/api/v1/chat?b=' + encodeURIComponent(b), {
-                    method: 'GET',
+                var postRes = await fetch('/api/v1/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text }),
                     mode: 'same-origin',
                 });
-                var raw = await res.text();
+                var raw = await postRes.text();
+                if (postRes.status === 502 || looksLikeHtml(raw)) {
+                    var b = utf8ToB64Url(text);
+                    var getRes = await fetch('/api/v1/chat', {
+                        method: 'GET',
+                        headers: { 'X-Chat-B': b },
+                        mode: 'same-origin',
+                    });
+                    raw = await getRes.text();
+                    postRes = getRes;
+                }
                 var data = {};
                 try {
                     data = raw ? JSON.parse(raw) : {};
                 } catch (parseErr) {
-                    err.textContent = 'HTTP ' + res.status + ' — not JSON (often a Cloudflare error). First chars: ' + (raw || '').slice(0, 120);
+                    err.textContent = 'HTTP ' + postRes.status + ' — not JSON (often a Cloudflare error). First chars: ' + (raw || '').slice(0, 120);
                     return;
                 }
-                if (!res.ok) {
-                    err.textContent = data.error || ('HTTP ' + res.status);
+                if (!postRes.ok) {
+                    err.textContent = data.error || ('HTTP ' + postRes.status);
                     return;
                 }
                 log.textContent += 'Assistant: ' + (data.answer || '') + '\n\n';
