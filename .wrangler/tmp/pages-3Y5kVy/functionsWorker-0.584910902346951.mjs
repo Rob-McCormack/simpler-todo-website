@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// api/v1/chat.js
+// ../lib/chat-handler.js
 var DEFAULT_MODEL = "claude-3-5-haiku-20241022";
 var UPSTREAM_MS = 45e3;
 var MAX_MESSAGE = 2e3;
@@ -38,13 +38,29 @@ function decodeB64Url(b64url) {
 __name(decodeB64Url, "decodeB64Url");
 function parseMessageFromBody(request, rawBody) {
   const ct = (request.headers.get("content-type") || "").toLowerCase();
+  if (ct.includes("text/plain")) {
+    return (rawBody || "").trim();
+  }
   if (ct.includes("application/x-www-form-urlencoded")) {
     const params = new URLSearchParams(rawBody);
-    return (params.get("message") || "").trim();
+    const b = (params.get("b") || "").trim();
+    if (b) {
+      const d = decodeB64Url(b);
+      return d === null ? null : d.trim();
+    }
+    return (params.get("message") || params.get("m") || params.get("q") || params.get("t") || "").trim();
   }
   try {
     const body = rawBody ? JSON.parse(rawBody) : {};
-    return typeof body.message === "string" ? body.message.trim() : "";
+    if (typeof body.b === "string" && body.b.trim()) {
+      const d = decodeB64Url(body.b.trim());
+      return d === null ? null : d.trim();
+    }
+    if (typeof body.message === "string") return body.message.trim();
+    if (typeof body.m === "string") return body.m.trim();
+    if (typeof body.q === "string") return body.q.trim();
+    if (typeof body.t === "string") return body.t.trim();
+    return "";
   } catch {
     return null;
   }
@@ -175,12 +191,12 @@ async function onRequest(context) {
     }
     return json({
       ok: true,
-      route: "/api/v1/chat",
-      hint: "WAF often blocks ?message= or long ?b=. Prefer POST JSON {message} or GET with header X-Chat-B: <base64url>."
+      route: url.pathname,
+      hint: "If the browser gets HTML 502, Cloudflare blocked the request before the Worker. Try POST JSON {b}, POST text/plain, GET + X-Chat-B, or a WAF skip for this path. /api/v1/c is an alias of this handler."
     });
   }
   if (request.method !== "POST") {
-    return json({ error: "Use GET ?b=\u2026 or POST." }, 405);
+    return json({ error: "Use GET (hint) or POST." }, 405);
   }
   try {
     if (url.searchParams.get("__health") === "1") {
@@ -189,7 +205,13 @@ async function onRequest(context) {
     const rawBody = await request.text();
     const message = parseMessageFromBody(request, rawBody);
     if (message === null) {
-      return json({ error: "Invalid body (form message=\u2026 or JSON {message})." }, 400);
+      return json(
+        { error: "Invalid body (JSON {b|message|m|q|t}, text/plain, or form)." },
+        400
+      );
+    }
+    if (!message.trim()) {
+      return json({ error: "Missing message." }, 400);
     }
     return await completeChat(env, message);
   } catch (e) {
@@ -201,6 +223,13 @@ __name(onRequest, "onRequest");
 
 // ../.wrangler/tmp/pages-3Y5kVy/functionsRoutes-0.29068054086155537.mjs
 var routes = [
+  {
+    routePath: "/api/v1/c",
+    mountPath: "/api/v1",
+    method: "",
+    middlewares: [],
+    modules: [onRequest]
+  },
   {
     routePath: "/api/v1/chat",
     mountPath: "/api/v1",
@@ -697,7 +726,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-6ZAj58/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-HSAcRg/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -729,7 +758,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-6ZAj58/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-HSAcRg/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

@@ -42,13 +42,29 @@ __name(decodeB64Url, "decodeB64Url");
 __name2(decodeB64Url, "decodeB64Url");
 function parseMessageFromBody(request, rawBody) {
   const ct = (request.headers.get("content-type") || "").toLowerCase();
+  if (ct.includes("text/plain")) {
+    return (rawBody || "").trim();
+  }
   if (ct.includes("application/x-www-form-urlencoded")) {
     const params = new URLSearchParams(rawBody);
-    return (params.get("message") || "").trim();
+    const b = (params.get("b") || "").trim();
+    if (b) {
+      const d = decodeB64Url(b);
+      return d === null ? null : d.trim();
+    }
+    return (params.get("message") || params.get("m") || params.get("q") || params.get("t") || "").trim();
   }
   try {
     const body = rawBody ? JSON.parse(rawBody) : {};
-    return typeof body.message === "string" ? body.message.trim() : "";
+    if (typeof body.b === "string" && body.b.trim()) {
+      const d = decodeB64Url(body.b.trim());
+      return d === null ? null : d.trim();
+    }
+    if (typeof body.message === "string") return body.message.trim();
+    if (typeof body.m === "string") return body.m.trim();
+    if (typeof body.q === "string") return body.q.trim();
+    if (typeof body.t === "string") return body.t.trim();
+    return "";
   } catch {
     return null;
   }
@@ -183,12 +199,12 @@ async function onRequest(context) {
     }
     return json({
       ok: true,
-      route: "/api/v1/chat",
-      hint: "WAF often blocks ?message= or long ?b=. Prefer POST JSON {message} or GET with header X-Chat-B: <base64url>."
+      route: url.pathname,
+      hint: "If the browser gets HTML 502, Cloudflare blocked the request before the Worker. Try POST JSON {b}, POST text/plain, GET + X-Chat-B, or a WAF skip for this path. /api/v1/c is an alias of this handler."
     });
   }
   if (request.method !== "POST") {
-    return json({ error: "Use GET ?b=\u2026 or POST." }, 405);
+    return json({ error: "Use GET (hint) or POST." }, 405);
   }
   try {
     if (url.searchParams.get("__health") === "1") {
@@ -197,7 +213,13 @@ async function onRequest(context) {
     const rawBody = await request.text();
     const message = parseMessageFromBody(request, rawBody);
     if (message === null) {
-      return json({ error: "Invalid body (form message=\u2026 or JSON {message})." }, 400);
+      return json(
+        { error: "Invalid body (JSON {b|message|m|q|t}, text/plain, or form)." },
+        400
+      );
+    }
+    if (!message.trim()) {
+      return json({ error: "Missing message." }, 400);
     }
     return await completeChat(env, message);
   } catch (e) {
@@ -208,6 +230,13 @@ async function onRequest(context) {
 __name(onRequest, "onRequest");
 __name2(onRequest, "onRequest");
 var routes = [
+  {
+    routePath: "/api/v1/c",
+    mountPath: "/api/v1",
+    method: "",
+    middlewares: [],
+    modules: [onRequest]
+  },
   {
     routePath: "/api/v1/chat",
     mountPath: "/api/v1",
