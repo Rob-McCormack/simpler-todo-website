@@ -6,6 +6,7 @@ var __defProp2 = Object.defineProperty;
 var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
 var DEFAULT_MODEL = "claude-3-5-haiku-20241022";
 var UPSTREAM_MS = 45e3;
+var MAX_MESSAGE = 2e3;
 var CORS_HEADERS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, OPTIONS",
@@ -16,7 +17,8 @@ function json(data, status = 200) {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
+      "cache-control": "no-store, private",
+      pragma: "no-cache",
       ...CORS_HEADERS
     }
   });
@@ -38,6 +40,71 @@ function parseMessageFromBody(request, rawBody) {
 }
 __name(parseMessageFromBody, "parseMessageFromBody");
 __name2(parseMessageFromBody, "parseMessageFromBody");
+async function completeChat(env, message) {
+  const key = typeof env.ANTHROPIC_API_KEY === "string" ? env.ANTHROPIC_API_KEY.trim() : "";
+  if (!key) {
+    return json(
+      {
+        error: "ANTHROPIC_API_KEY is not set (Pages \u2192 Settings \u2192 Variables and Secrets \u2192 Production)."
+      },
+      503
+    );
+  }
+  const trimmed = (message || "").trim();
+  if (!trimmed) {
+    return json({ error: "Missing message." }, 400);
+  }
+  if (trimmed.length > MAX_MESSAGE) {
+    return json({ error: `Message too long (max ${MAX_MESSAGE} characters).` }, 400);
+  }
+  const model = typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim() || DEFAULT_MODEL;
+  const controller = new AbortController();
+  const tid = setTimeout(() => controller.abort(), UPSTREAM_MS);
+  let res;
+  try {
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1024,
+        system: "You are a helpful assistant for SimplerToDo. Be brief.",
+        messages: [{ role: "user", content: trimmed }]
+      })
+    });
+  } catch (e) {
+    clearTimeout(tid);
+    const aborted = e && (e.name === "AbortError" || e.name === "TimeoutError");
+    console.error("chat upstream fetch", e);
+    return json(
+      { error: aborted ? "Claude API took too long. Try again." : "Could not reach Claude API." },
+      502
+    );
+  }
+  clearTimeout(tid);
+  const raw = await res.text();
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return json({ error: "Claude returned non-JSON (check API key and model)." }, 502);
+  }
+  if (!res.ok) {
+    return json({ error: data.error?.message || `Claude API HTTP ${res.status}` }, 502);
+  }
+  let text = "";
+  for (const block of data.content || []) {
+    if (block.type === "text" && block.text) text += block.text;
+  }
+  return json({ answer: text.trim() || "(empty)" });
+}
+__name(completeChat, "completeChat");
+__name2(completeChat, "completeChat");
 async function onRequest(context) {
   const { request, env } = context;
   if (request.method === "OPTIONS") {
@@ -49,81 +116,34 @@ async function onRequest(context) {
       }
     });
   }
+  const url = new URL(request.url);
   if (request.method === "GET") {
-    return json({ ok: true, route: "/api/v1/chat" });
+    const msg = (url.searchParams.get("message") || "").trim();
+    if (msg) {
+      try {
+        return await completeChat(env, msg);
+      } catch (e) {
+        console.error("chat GET", e);
+        return json({ error: "Unexpected server error." }, 500);
+      }
+    }
+    return json({ ok: true, route: "/api/v1/chat", hint: "Add ?message=\u2026 for chat (browser-friendly)." });
   }
   if (request.method !== "POST") {
-    return json({ error: "Use POST" }, 405);
+    return json({ error: "Use GET ?message=\u2026 or POST." }, 405);
   }
   try {
-    const url = new URL(request.url);
     if (url.searchParams.get("__health") === "1") {
       return json({ ok: true, ping: "post-without-upstream" });
-    }
-    const key = typeof env.ANTHROPIC_API_KEY === "string" ? env.ANTHROPIC_API_KEY.trim() : "";
-    if (!key) {
-      return json(
-        {
-          error: "ANTHROPIC_API_KEY is not set (Pages \u2192 Settings \u2192 Variables and Secrets \u2192 Production)."
-        },
-        503
-      );
     }
     const rawBody = await request.text();
     const message = parseMessageFromBody(request, rawBody);
     if (message === null) {
-      return json({ error: "Invalid body (use form field message=\u2026 or JSON {message})." }, 400);
+      return json({ error: "Invalid body (form message=\u2026 or JSON {message})." }, 400);
     }
-    if (!message) {
-      return json({ error: "Missing message." }, 400);
-    }
-    const model = typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim() || DEFAULT_MODEL;
-    const controller = new AbortController();
-    const tid = setTimeout(() => controller.abort(), UPSTREAM_MS);
-    let res;
-    try {
-      res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": key,
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 1024,
-          system: "You are a helpful assistant for SimplerToDo. Be brief.",
-          messages: [{ role: "user", content: message }]
-        })
-      });
-    } catch (e) {
-      clearTimeout(tid);
-      const aborted = e && (e.name === "AbortError" || e.name === "TimeoutError");
-      console.error("chat upstream fetch", e);
-      return json(
-        { error: aborted ? "Claude API took too long. Try again." : "Could not reach Claude API." },
-        502
-      );
-    }
-    clearTimeout(tid);
-    const raw = await res.text();
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      return json({ error: "Claude returned non-JSON (check API key and model)." }, 502);
-    }
-    if (!res.ok) {
-      return json({ error: data.error?.message || `Claude API HTTP ${res.status}` }, 502);
-    }
-    let text = "";
-    for (const block of data.content || []) {
-      if (block.type === "text" && block.text) text += block.text;
-    }
-    return json({ answer: text.trim() || "(empty)" });
+    return await completeChat(env, message);
   } catch (e) {
-    console.error("chat onRequest", e);
+    console.error("chat POST", e);
     return json({ error: "Unexpected server error." }, 500);
   }
 }

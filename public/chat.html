@@ -54,6 +54,7 @@
         <button type="submit">Send</button>
     </form>
     <p id="err"></p>
+    <p style="font-size:0.8rem;color:#666;margin-top:1rem">Uses GET (not POST) so Cloudflare doesn’t block the browser. Don’t paste secrets; text may appear in URL history.</p>
 
     <script>
         var log = document.getElementById('log');
@@ -67,14 +68,16 @@
             input.value = '';
             log.textContent += 'You: ' + text + '\n\n';
             try {
-                // Form body (not JSON) — some Cloudflare WAF rules block application/json POSTs to APIs.
+                // GET avoids browser POST being blocked by Cloudflare Bot Fight (curl POST still works).
+                if (text.length > 1800) {
+                    err.textContent = 'Message too long for this page (max ~1800 characters).';
+                    return;
+                }
                 var params = new URLSearchParams();
                 params.set('message', text);
-                var res = await fetch('/api/v1/chat', {
-                    method: 'POST',
+                var res = await fetch('/api/v1/chat?' + params.toString(), {
+                    method: 'GET',
                     mode: 'same-origin',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-                    body: params.toString(),
                 });
                 var raw = await res.text();
                 var data = {};
