@@ -63,9 +63,30 @@ function rateLimitKey(ip, date) {
   return `help:${ip}:${date}`;
 }
 __name(rateLimitKey, "rateLimitKey");
+async function resolveAnthropicApiKey(env) {
+  const v = env.ANTHROPIC_API_KEY;
+  if (v == null) return "";
+  if (typeof v === "string") return v.trim();
+  if (typeof v.get === "function") {
+    try {
+      const s = await v.get();
+      return typeof s === "string" ? s.trim() : "";
+    } catch (e) {
+      console.error("help api: ANTHROPIC_API_KEY.get() failed", e);
+      return "";
+    }
+  }
+  return "";
+}
+__name(resolveAnthropicApiKey, "resolveAnthropicApiKey");
 async function handlePost(context) {
   const { request, env } = context;
-  if (!env.ANTHROPIC_API_KEY) {
+  const apiKey = await resolveAnthropicApiKey(env);
+  if (!apiKey) {
+    console.error(
+      "help api: ANTHROPIC_API_KEY missing or empty. env keys:",
+      env && typeof env === "object" ? Object.keys(env).join(", ") : "(no env)"
+    );
     return jsonResponse({ error: "Help assistant is not configured." }, 503);
   }
   if (!env.HELP_RATE_LIMIT) {
@@ -104,7 +125,7 @@ async function handlePost(context) {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-api-key": env.ANTHROPIC_API_KEY,
+      "x-api-key": apiKey,
       "anthropic-version": "2023-06-01"
     },
     body: JSON.stringify({
@@ -667,7 +688,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-TLxBpk/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-ZkVKqp/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -699,7 +720,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-TLxBpk/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-ZkVKqp/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

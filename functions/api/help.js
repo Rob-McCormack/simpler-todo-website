@@ -1,6 +1,7 @@
 /**
  * POST /api/help — Claude proxy with KV rate limit (5/day per IP, UTC).
- * Env: ANTHROPIC_API_KEY (required), optional ANTHROPIC_MODEL, HELP_RATE_LIMIT (KV).
+ * Env: ANTHROPIC_API_KEY (required) — plain string from Pages Variables, OR Secrets Store binding (async .get()).
+ * Optional: ANTHROPIC_MODEL, HELP_RATE_LIMIT (KV).
  */
 
 const MAX_PER_DAY = 5;
@@ -67,10 +68,38 @@ function rateLimitKey(ip, date) {
   return `help:${ip}:${date}`;
 }
 
+/**
+ * Pages "Variables and Secrets" → string on env.
+ * Secrets Store → binding with same name; value via await binding.get()
+ * @see https://developers.cloudflare.com/secrets-store/integrations/workers/
+ */
+async function resolveAnthropicApiKey(env) {
+  const v = env.ANTHROPIC_API_KEY;
+  if (v == null) return "";
+  if (typeof v === "string") return v.trim();
+  if (typeof v.get === "function") {
+    try {
+      const s = await v.get();
+      return typeof s === "string" ? s.trim() : "";
+    } catch (e) {
+      console.error("help api: ANTHROPIC_API_KEY.get() failed", e);
+      return "";
+    }
+  }
+  return "";
+}
+
 async function handlePost(context) {
   const { request, env } = context;
 
-  if (!env.ANTHROPIC_API_KEY) {
+  const apiKey = await resolveAnthropicApiKey(env);
+  if (!apiKey) {
+    // Dashboard: Pages project → Settings → Variables and Secrets → Production (not only Build).
+    // Redeploy after adding. Real-time logs show binding names (not values) to verify env is wired.
+    console.error(
+      "help api: ANTHROPIC_API_KEY missing or empty. env keys:",
+      env && typeof env === "object" ? Object.keys(env).join(", ") : "(no env)",
+    );
     return jsonResponse({ error: "Help assistant is not configured." }, 503);
   }
 
@@ -116,7 +145,7 @@ async function handlePost(context) {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-api-key": env.ANTHROPIC_API_KEY,
+      "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({

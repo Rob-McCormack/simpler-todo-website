@@ -1,13 +1,25 @@
-# Cloudflare Pages — build output is this directory (static + functions/).
-# Do NOT put placeholder KV IDs here; deploy will fail validation.
+# Cloudflare Pages — config is Git-managed; plain env vars live here.
+# Dashboard: only encrypted "Secrets" can be added there (see Cloudflare notice).
 #
-# Production: Pages → your project → Settings → Functions:
-#   - KV namespace: create one, bind as HELP_RATE_LIMIT (same name as in functions/api/help.js)
-#   - Variables/secrets: ANTHROPIC_API_KEY (and optional ANTHROPIC_MODEL)
-#
-# Local: npx wrangler pages dev .
-# Optional: add [[kv_namespaces]] below only after you have a real namespace id from the dashboard.
+# Docs: https://developers.cloudflare.com/pages/functions/wrangler-configuration/
 
 name = "simpler-todo-website"
 pages_build_output_dir = "."
 compatibility_date = "2025-03-01"
+
+# Anthropic API key from account Secrets Store (async .get() in functions/api/help.js).
+# Store ID: Secrets Store → your store → copy ID. Secret name must match what you created.
+[[secrets_store_secrets]]
+binding = "ANTHROPIC_API_KEY"
+store_id = "5c9dde4707bb474fbb9fd628c73da524"
+secret_name = "ANTHROPIC_API_KEY"
+
+# Rate limiting — uncomment and set a real KV namespace id (Workers & Pages → KV → copy ID).
+# Invalid ids fail deploy. If KV is already bound in the dashboard only, ask Cloudflare docs whether to duplicate here.
+# [[kv_namespaces]]
+# binding = "HELP_RATE_LIMIT"
+# id = "YOUR_KV_NAMESPACE_ID"
+
+# Optional non-secret:
+# [vars]
+# ANTHROPIC_MODEL = "claude-haiku-4-5"
