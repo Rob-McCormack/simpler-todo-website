@@ -1,0 +1,21 @@
+---
+description: Where the help/chat API runs and how to test locally
+globs:
+  - "**/help.html"
+  - "functions/**/*.js"
+alwaysApply: false
+---
+
+# Help API (`/api/help`)
+
+- Implemented as a **Cloudflare Pages Function** at `functions/api/help.js`. It runs on **Cloudflare** for every deployment of this project (production domain, preview branches, `*.pages.dev`), not only `simplertodo.com`. There is **no hostname allowlist** in code unless you add one.
+- **Secrets** (`ANTHROPIC_API_KEY`, KV `HELP_RATE_LIMIT`) are configured in the **Cloudflare Pages** project, not in the repo.
+
+## Local development
+
+- **Does not work**: Opening `help.html` via `file://`, or a plain static server (`python -m http.server`, etc.) — there is **no** `/api/help` route without the Worker.
+- **Works**: `npx wrangler pages dev .` from the repo root so Pages Functions run locally; set the same bindings/secrets via Wrangler or `.dev.vars` as documented for your project.
+
+## Client
+
+- `help.html` uses `fetch('/api/help', …)` — **same origin** only. The browser must load the page from the same host that serves the Function (e.g. `localhost:8788` with `wrangler pages dev`, or your deployed URL).
