@@ -47,3 +47,10 @@ In the same **Variables and Secrets** section you can add plain text:
 - `ANTHROPIC_MODEL` — e.g. another Claude model id from Anthropic’s docs.
 
 If unset, the Worker uses `claude-3-5-haiku-20241022`.
+
+## If you see HTTP 502 (HTML error page)
+
+1. **GET** `https://YOUR_DOMAIN/api/chat` in the browser — you should see JSON `{"ok":true,...}`.
+   - If **GET is also 502**, the **Function** isn’t running or the **build output** is wrong (e.g. build output directory must be **`public`**).
+2. **POST** returns **JSON** errors from our Worker (e.g. missing key, bad model) — if you still get **HTML** 502, **Workers & Pages** → your project → **Logs** / **Real-time logs** while submitting the form.
+3. Confirm **`ANTHROPIC_API_KEY`** is on the **Pages** project (**Variables and Secrets** → **Production**), then **redeploy** after saving.

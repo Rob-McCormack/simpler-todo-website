@@ -1,43 +1,59 @@
 /**
- * POST /api/chat — minimal Claude proxy.
- * Env: ANTHROPIC_API_KEY (Pages secret, plain string).
+ * /api/chat — POST JSON { message } → { answer } or { error }.
+ * Env: ANTHROPIC_API_KEY (Pages → Variables and Secrets → Production, encrypted).
  * Optional: ANTHROPIC_MODEL
  */
 
-const MODEL = "claude-3-5-haiku-20241022";
+const DEFAULT_MODEL = "claude-3-5-haiku-20241022";
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+    },
   });
 }
 
-export async function onRequestGet() {
-  return json({ ok: true });
-}
+export async function onRequest(context) {
+  const { request, env } = context;
 
-export async function onRequestPost(context) {
+  if (request.method === "GET") {
+    return json({ ok: true, route: "/api/chat" });
+  }
+
+  if (request.method !== "POST") {
+    return json({ error: "Use POST" }, 405);
+  }
+
   try {
-    const { request, env } = context;
     const key = typeof env.ANTHROPIC_API_KEY === "string" ? env.ANTHROPIC_API_KEY.trim() : "";
     if (!key) {
-      return json({ error: "ANTHROPIC_API_KEY is not set on this Pages project." }, 503);
+      return json(
+        {
+          error:
+            "ANTHROPIC_API_KEY is not set. In Cloudflare: Pages project → Settings → Variables and Secrets → Production → add encrypted secret with that exact name.",
+        },
+        503,
+      );
     }
 
     let body;
     try {
       body = await request.json();
     } catch {
-      return json({ error: "Invalid JSON." }, 400);
+      return json({ error: "Invalid JSON body." }, 400);
     }
+
     const message = typeof body.message === "string" ? body.message.trim() : "";
     if (!message) {
       return json({ error: "Missing message." }, 400);
     }
 
-    const model = env.ANTHROPIC_MODEL || MODEL;
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const model = (typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim()) || DEFAULT_MODEL;
+
+    const fetchOpts = {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -50,18 +66,39 @@ export async function onRequestPost(context) {
         system: "You are a helpful assistant for SimplerToDo. Be brief.",
         messages: [{ role: "user", content: message }],
       }),
-    });
+    };
+
+    if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+      fetchOpts.signal = AbortSignal.timeout(60_000);
+    }
+
+    let res;
+    try {
+      res = await fetch("https://api.anthropic.com/v1/messages", fetchOpts);
+    } catch (e) {
+      console.error("chat fetch", e);
+      const msg =
+        e && (e.name === "TimeoutError" || e.name === "AbortError")
+          ? "Request to Claude timed out."
+          : "Could not reach Claude API.";
+      return json({ error: msg }, 502);
+    }
 
     const raw = await res.text();
     let data;
     try {
       data = JSON.parse(raw);
     } catch {
-      return json({ error: "Assistant returned non-JSON." }, 502);
+      return json({ error: "Claude returned non-JSON (check model name and API key)." }, 502);
     }
 
     if (!res.ok) {
-      return json({ error: data.error?.message || `Anthropic error (${res.status})` }, 502);
+      return json(
+        {
+          error: data.error?.message || `Claude API HTTP ${res.status}`,
+        },
+        502,
+      );
     }
 
     let text = "";
@@ -70,7 +107,7 @@ export async function onRequestPost(context) {
     }
     return json({ answer: text.trim() || "(empty)" });
   } catch (e) {
-    console.error("chat api", e);
-    return json({ error: "Server error." }, 500);
+    console.error("chat onRequest", e);
+    return json({ error: "Unexpected server error." }, 500);
   }
 }

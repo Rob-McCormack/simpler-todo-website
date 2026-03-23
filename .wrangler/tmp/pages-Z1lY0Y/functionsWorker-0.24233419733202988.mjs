@@ -2,37 +2,47 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // api/chat.js
-var MODEL = "claude-3-5-haiku-20241022";
+var DEFAULT_MODEL = "claude-3-5-haiku-20241022";
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" }
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store"
+    }
   });
 }
 __name(json, "json");
-async function onRequestGet() {
-  return json({ ok: true });
-}
-__name(onRequestGet, "onRequestGet");
-async function onRequestPost(context) {
+async function onRequest(context) {
+  const { request, env } = context;
+  if (request.method === "GET") {
+    return json({ ok: true, route: "/api/chat" });
+  }
+  if (request.method !== "POST") {
+    return json({ error: "Use POST" }, 405);
+  }
   try {
-    const { request, env } = context;
     const key = typeof env.ANTHROPIC_API_KEY === "string" ? env.ANTHROPIC_API_KEY.trim() : "";
     if (!key) {
-      return json({ error: "ANTHROPIC_API_KEY is not set on this Pages project." }, 503);
+      return json(
+        {
+          error: "ANTHROPIC_API_KEY is not set. In Cloudflare: Pages project \u2192 Settings \u2192 Variables and Secrets \u2192 Production \u2192 add encrypted secret with that exact name."
+        },
+        503
+      );
     }
     let body;
     try {
       body = await request.json();
     } catch {
-      return json({ error: "Invalid JSON." }, 400);
+      return json({ error: "Invalid JSON body." }, 400);
     }
     const message = typeof body.message === "string" ? body.message.trim() : "";
     if (!message) {
       return json({ error: "Missing message." }, 400);
     }
-    const model = env.ANTHROPIC_MODEL || MODEL;
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const model = typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim() || DEFAULT_MODEL;
+    const fetchOpts = {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -45,16 +55,32 @@ async function onRequestPost(context) {
         system: "You are a helpful assistant for SimplerToDo. Be brief.",
         messages: [{ role: "user", content: message }]
       })
-    });
+    };
+    if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+      fetchOpts.signal = AbortSignal.timeout(6e4);
+    }
+    let res;
+    try {
+      res = await fetch("https://api.anthropic.com/v1/messages", fetchOpts);
+    } catch (e) {
+      console.error("chat fetch", e);
+      const msg = e && (e.name === "TimeoutError" || e.name === "AbortError") ? "Request to Claude timed out." : "Could not reach Claude API.";
+      return json({ error: msg }, 502);
+    }
     const raw = await res.text();
     let data;
     try {
       data = JSON.parse(raw);
     } catch {
-      return json({ error: "Assistant returned non-JSON." }, 502);
+      return json({ error: "Claude returned non-JSON (check model name and API key)." }, 502);
     }
     if (!res.ok) {
-      return json({ error: data.error?.message || `Anthropic error (${res.status})` }, 502);
+      return json(
+        {
+          error: data.error?.message || `Claude API HTTP ${res.status}`
+        },
+        502
+      );
     }
     let text = "";
     for (const block of data.content || []) {
@@ -62,27 +88,20 @@ async function onRequestPost(context) {
     }
     return json({ answer: text.trim() || "(empty)" });
   } catch (e) {
-    console.error("chat api", e);
-    return json({ error: "Server error." }, 500);
+    console.error("chat onRequest", e);
+    return json({ error: "Unexpected server error." }, 500);
   }
 }
-__name(onRequestPost, "onRequestPost");
+__name(onRequest, "onRequest");
 
 // ../.wrangler/tmp/pages-Z1lY0Y/functionsRoutes-0.11351285082364881.mjs
 var routes = [
   {
     routePath: "/api/chat",
     mountPath: "/api",
-    method: "GET",
+    method: "",
     middlewares: [],
-    modules: [onRequestGet]
-  },
-  {
-    routePath: "/api/chat",
-    mountPath: "/api",
-    method: "POST",
-    middlewares: [],
-    modules: [onRequestPost]
+    modules: [onRequest]
   }
 ];
 
@@ -573,7 +592,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-FKcXYr/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-aVjche/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -605,7 +624,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-FKcXYr/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-aVjche/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

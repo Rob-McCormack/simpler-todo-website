@@ -72,7 +72,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: text }),
                 });
-                var data = await res.json().catch(function () { return {}; });
+                var raw = await res.text();
+                var data = {};
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch (parseErr) {
+                    err.textContent = 'HTTP ' + res.status + ' — not JSON (often a Cloudflare error). First chars: ' + (raw || '').slice(0, 120);
+                    return;
+                }
                 if (!res.ok) {
                     err.textContent = data.error || ('HTTP ' + res.status);
                     return;
