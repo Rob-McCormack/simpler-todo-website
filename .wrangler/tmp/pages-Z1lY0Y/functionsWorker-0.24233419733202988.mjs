@@ -1,243 +1,88 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// api/help.js
-var MAX_PER_DAY = 5;
-var MAX_MESSAGE_LEN = 2e3;
-var KV_TTL_SECONDS = 172800;
-var HELP_DOCS = `
-SimplerToDo \u2014 official help (for support answers only)
-
-What it is
-- SimplerToDo is a free, open-source, keyboard-friendly to-do app with five sections (Today, Next, Waiting, Someday, Done), tags, and reports.
-- The web app is at https://app.simplertodo.com/ \u2014 marketing site at https://simplertodo.com/
-
-Data & privacy
-- Your tasks stay on your device only. There is no account, no server sync, and SimplerToDo does not collect or store your task data on company servers.
-- You can export your data anytime from the app.
-
-Export
-- Supported export formats include plain text, rich text, Markdown, and JSON (as described on the website).
-
-Features (high level)
-- Sections to organize work; tags for filtering; fast search and reports; keyboard shortcuts for power users.
-
-Open source
-- The project is open source; details and links are on the marketing site and GitHub as referenced there.
-
-Support
-- For questions not covered here: simplertasks@gmail.com
-`.trim();
-var SYSTEM_PROMPT = `You are the official SimplerToDo help assistant.
-
-Rules:
-- Answer ONLY using the documentation below. If the documentation does not contain the answer, say you are not sure and tell the user to email simplertasks@gmail.com for help.
-- Reply in plain text only. Do not use markdown, headings, bullet symbols, numbered lists with markdown syntax, code blocks, or asterisks for emphasis.
-- Keep answers short and friendly.
-
-Documentation:
-${HELP_DOCS}`;
-function jsonResponse(data, status = 200) {
+// api/chat.js
+var MODEL = "claude-3-5-haiku-20241022";
+function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store"
-    }
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" }
   });
 }
-__name(jsonResponse, "jsonResponse");
-function getClientIp(request) {
-  const cf = request.headers.get("cf-connecting-ip");
-  if (cf) return cf.trim();
-  const xff = request.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0].trim();
-  return "unknown";
+__name(json, "json");
+async function onRequestGet() {
+  return json({ ok: true });
 }
-__name(getClientIp, "getClientIp");
-function utcDateKey() {
-  return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-}
-__name(utcDateKey, "utcDateKey");
-function rateLimitKey(ip, date) {
-  return `help:${ip}:${date}`;
-}
-__name(rateLimitKey, "rateLimitKey");
-async function resolveAnthropicApiKey(env) {
-  const v = env.ANTHROPIC_API_KEY;
-  if (v == null) return "";
-  if (typeof v === "string") return v.trim();
-  if (typeof v.get === "function") {
-    try {
-      const s = await v.get();
-      return typeof s === "string" ? s.trim() : "";
-    } catch (e) {
-      console.error("help api: ANTHROPIC_API_KEY.get() failed", e);
-      return "";
-    }
-  }
-  return "";
-}
-__name(resolveAnthropicApiKey, "resolveAnthropicApiKey");
-async function handlePost(context) {
-  const { request, env } = context;
-  const apiKey = await resolveAnthropicApiKey(env);
-  if (!apiKey) {
-    console.error(
-      "help api: ANTHROPIC_API_KEY missing or empty. env keys:",
-      env && typeof env === "object" ? Object.keys(env).join(", ") : "(no env)"
-    );
-    return jsonResponse({ error: "Help assistant is not configured." }, 503);
-  }
-  let body;
+__name(onRequestGet, "onRequestGet");
+async function onRequestPost(context) {
   try {
-    body = await request.json();
-  } catch {
-    return jsonResponse({ error: "Invalid JSON body." }, 400);
-  }
-  const message = typeof body.message === "string" ? body.message.trim() : "";
-  if (!message) {
-    return jsonResponse({ error: "Missing message." }, 400);
-  }
-  if (message.length > MAX_MESSAGE_LEN) {
-    return jsonResponse({ error: `Message too long (max ${MAX_MESSAGE_LEN} characters).` }, 400);
-  }
-  let kv = env.HELP_RATE_LIMIT;
-  let count = 0;
-  let rateLimitKeyStr = "";
-  if (kv) {
-    try {
-      const ip = getClientIp(request);
-      const date = utcDateKey();
-      rateLimitKeyStr = rateLimitKey(ip, date);
-      const rawCount = await kv.get(rateLimitKeyStr);
-      count = parseInt(rawCount || "0", 10);
-      if (Number.isNaN(count) || count < 0) count = 0;
-      if (count >= MAX_PER_DAY) {
-        return jsonResponse(
-          {
-            error: "Daily question limit reached. Try again tomorrow (UTC) or use the FAQ and email below.",
-            remaining: 0
-          },
-          429
-        );
-      }
-    } catch (e) {
-      console.error("help api: KV read failed; continuing without rate limit", e);
-      kv = null;
+    const { request, env } = context;
+    const key = typeof env.ANTHROPIC_API_KEY === "string" ? env.ANTHROPIC_API_KEY.trim() : "";
+    if (!key) {
+      return json({ error: "ANTHROPIC_API_KEY is not set on this Pages project." }, 503);
     }
-  } else {
-    console.warn(
-      "help api: HELP_RATE_LIMIT KV not bound \u2014 rate limiting disabled. Add KV in wrangler.toml (see repo comment)."
-    );
-  }
-  const model = env.ANTHROPIC_MODEL || "claude-3-5-haiku-20241022";
-  let anthropicRes;
-  try {
-    anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: "Invalid JSON." }, 400);
+    }
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+    if (!message) {
+      return json({ error: "Missing message." }, 400);
+    }
+    const model = env.ANTHROPIC_MODEL || MODEL;
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-api-key": apiKey,
+        "x-api-key": key,
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
         model,
         max_tokens: 1024,
-        system: SYSTEM_PROMPT,
+        system: "You are a helpful assistant for SimplerToDo. Be brief.",
         messages: [{ role: "user", content: message }]
       })
     });
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return json({ error: "Assistant returned non-JSON." }, 502);
+    }
+    if (!res.ok) {
+      return json({ error: data.error?.message || `Anthropic error (${res.status})` }, 502);
+    }
+    let text = "";
+    for (const block of data.content || []) {
+      if (block.type === "text" && block.text) text += block.text;
+    }
+    return json({ answer: text.trim() || "(empty)" });
   } catch (e) {
-    console.error("help api: Anthropic fetch failed", e);
-    return jsonResponse({ error: "Could not reach assistant. Try again." }, 502);
+    console.error("chat api", e);
+    return json({ error: "Server error." }, 500);
   }
-  const anthropicText = await anthropicRes.text();
-  let anthropicJson;
-  try {
-    anthropicJson = JSON.parse(anthropicText);
-  } catch {
-    return jsonResponse(
-      { error: "The help assistant returned an invalid response. Please try again or email simplertasks@gmail.com." },
-      502
-    );
-  }
-  if (!anthropicRes.ok) {
-    const errMsg = anthropicJson.error?.message || anthropicJson.message || `Assistant error (${anthropicRes.status}).`;
-    return jsonResponse(
-      {
-        error: errMsg
-      },
-      502
-    );
-  }
-  const blocks = anthropicJson.content || [];
-  let answer = "";
-  for (const block of blocks) {
-    if (block.type === "text" && block.text) {
-      answer += block.text;
-    }
-  }
-  answer = answer.trim();
-  if (!answer) {
-    return jsonResponse({ error: "Empty reply from assistant. Please try again." }, 502);
-  }
-  if (kv) {
-    try {
-      const next = count + 1;
-      await kv.put(rateLimitKeyStr, String(next), { expirationTtl: KV_TTL_SECONDS });
-      return jsonResponse({
-        answer,
-        remaining: Math.max(0, MAX_PER_DAY - next)
-      });
-    } catch (e) {
-      console.error("help api: KV write failed; returning answer without updating count", e);
-    }
-  }
-  return jsonResponse({
-    answer,
-    remaining: null
-  });
 }
-__name(handlePost, "handlePost");
-async function onRequest(context) {
-  const { request } = context;
-  if (request.method === "GET") {
-    return jsonResponse({ ok: true, path: "/api/help" }, 200);
-  }
-  if (request.method === "POST") {
-    try {
-      return await handlePost(context);
-    } catch (e) {
-      console.error("help api: unhandled error", e);
-      return jsonResponse(
-        {
-          error: "Something went wrong. Please try again or email simplertasks@gmail.com."
-        },
-        500
-      );
-    }
-  }
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "cache-control": "no-store"
-      }
-    });
-  }
-  return jsonResponse({ error: "Method not allowed. Use POST." }, 405);
-}
-__name(onRequest, "onRequest");
+__name(onRequestPost, "onRequestPost");
 
 // ../.wrangler/tmp/pages-Z1lY0Y/functionsRoutes-0.11351285082364881.mjs
 var routes = [
   {
-    routePath: "/api/help",
+    routePath: "/api/chat",
     mountPath: "/api",
-    method: "",
+    method: "GET",
     middlewares: [],
-    modules: [onRequest]
+    modules: [onRequestGet]
+  },
+  {
+    routePath: "/api/chat",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost]
   }
 ];
 
@@ -728,7 +573,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-J1SHDd/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-FKcXYr/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -760,7 +605,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-J1SHDd/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-FKcXYr/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

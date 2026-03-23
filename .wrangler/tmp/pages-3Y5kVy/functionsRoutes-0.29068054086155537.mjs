@@ -1,11 +1,19 @@
-import { onRequest as __api_help_js_onRequest } from "/Users/robmccormack/github/simpler-todo-website/functions/api/help.js"
+import { onRequestGet as __api_chat_js_onRequestGet } from "/Users/robmccormack/github/simpler-todo-website/functions/api/chat.js"
+import { onRequestPost as __api_chat_js_onRequestPost } from "/Users/robmccormack/github/simpler-todo-website/functions/api/chat.js"
 
 export const routes = [
     {
-      routePath: "/api/help",
+      routePath: "/api/chat",
       mountPath: "/api",
-      method: "",
+      method: "GET",
       middlewares: [],
-      modules: [__api_help_js_onRequest],
+      modules: [__api_chat_js_onRequestGet],
+    },
+  {
+      routePath: "/api/chat",
+      mountPath: "/api",
+      method: "POST",
+      middlewares: [],
+      modules: [__api_chat_js_onRequestPost],
     },
   ]

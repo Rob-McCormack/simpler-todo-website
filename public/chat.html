@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chat — SimplerToDo</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 36rem;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        #log {
+            min-height: 12rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        form {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 0.5rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+        }
+
+        #err {
+            color: #c00;
+            margin-top: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+    <p><a href="/">← Home</a></p>
+    <h1>Chat</h1>
+    <div id="log"></div>
+    <form id="f">
+        <input id="msg" type="text" placeholder="Type a message…" autocomplete="off" />
+        <button type="submit">Send</button>
+    </form>
+    <p id="err"></p>
+
+    <script>
+        var log = document.getElementById('log');
+        var err = document.getElementById('err');
+        document.getElementById('f').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            err.textContent = '';
+            var input = document.getElementById('msg');
+            var text = (input.value || '').trim();
+            if (!text) return;
+            input.value = '';
+            log.textContent += 'You: ' + text + '\n\n';
+            try {
+                var res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text }),
+                });
+                var data = await res.json().catch(function () { return {}; });
+                if (!res.ok) {
+                    err.textContent = data.error || ('HTTP ' + res.status);
+                    return;
+                }
+                log.textContent += 'Assistant: ' + (data.answer || '') + '\n\n';
+            } catch (x) {
+                err.textContent = x.message || 'Request failed';
+            }
+        });
+    </script>
+</body>
+
+</html>
