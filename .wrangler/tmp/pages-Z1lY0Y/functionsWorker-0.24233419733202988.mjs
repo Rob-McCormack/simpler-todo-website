@@ -22,6 +22,20 @@ function json(data, status = 200) {
   });
 }
 __name(json, "json");
+function decodeB64Url(b64url) {
+  if (!b64url || typeof b64url !== "string") return null;
+  try {
+    const pad = (4 - b64url.length % 4) % 4;
+    const std = b64url.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat(pad);
+    const bin = atob(std);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return null;
+  }
+}
+__name(decodeB64Url, "decodeB64Url");
 function parseMessageFromBody(request, rawBody) {
   const ct = (request.headers.get("content-type") || "").toLowerCase();
   if (ct.includes("application/x-www-form-urlencoded")) {
@@ -37,69 +51,97 @@ function parseMessageFromBody(request, rawBody) {
 }
 __name(parseMessageFromBody, "parseMessageFromBody");
 async function completeChat(env, message) {
-  const key = typeof env.ANTHROPIC_API_KEY === "string" ? env.ANTHROPIC_API_KEY.trim() : "";
-  if (!key) {
-    return json(
-      {
-        error: "ANTHROPIC_API_KEY is not set (Pages \u2192 Settings \u2192 Variables and Secrets \u2192 Production)."
-      },
-      503
-    );
-  }
-  const trimmed = (message || "").trim();
-  if (!trimmed) {
-    return json({ error: "Missing message." }, 400);
-  }
-  if (trimmed.length > MAX_MESSAGE) {
-    return json({ error: `Message too long (max ${MAX_MESSAGE} characters).` }, 400);
-  }
-  const model = typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim() || DEFAULT_MODEL;
-  const controller = new AbortController();
-  const tid = setTimeout(() => controller.abort(), UPSTREAM_MS);
-  let res;
   try {
-    res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 1024,
-        system: "You are a helpful assistant for SimplerToDo. Be brief.",
-        messages: [{ role: "user", content: trimmed }]
-      })
-    });
-  } catch (e) {
+    const key = typeof env.ANTHROPIC_API_KEY === "string" ? env.ANTHROPIC_API_KEY.trim() : "";
+    if (!key) {
+      return json(
+        {
+          error: "ANTHROPIC_API_KEY is not set (Pages \u2192 Settings \u2192 Variables and Secrets \u2192 Production)."
+        },
+        503
+      );
+    }
+    const trimmed = (message || "").trim();
+    if (!trimmed) {
+      return json({ error: "Missing message." }, 400);
+    }
+    if (trimmed.length > MAX_MESSAGE) {
+      return json({ error: `Message too long (max ${MAX_MESSAGE} characters).` }, 400);
+    }
+    const model = typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim() || DEFAULT_MODEL;
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), UPSTREAM_MS);
+    let res;
+    try {
+      res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 1024,
+          system: "You are a helpful assistant for SimplerToDo. Be brief.",
+          messages: [{ role: "user", content: trimmed }]
+        })
+      });
+    } catch (e) {
+      clearTimeout(tid);
+      const aborted = e && (e.name === "AbortError" || e.name === "TimeoutError");
+      console.error("chat upstream fetch", e);
+      return json(
+        { error: aborted ? "Claude API took too long. Try again." : "Could not reach Claude API." },
+        502
+      );
+    }
     clearTimeout(tid);
-    const aborted = e && (e.name === "AbortError" || e.name === "TimeoutError");
-    console.error("chat upstream fetch", e);
-    return json(
-      { error: aborted ? "Claude API took too long. Try again." : "Could not reach Claude API." },
-      502
-    );
+    let raw;
+    try {
+      raw = await res.text();
+    } catch (e) {
+      console.error("chat res.text", e);
+      return json({ error: "Bad response from Claude." }, 502);
+    }
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return json({ error: "Claude returned non-JSON (check API key and model)." }, 502);
+    }
+    if (!res.ok) {
+      return json({ error: data.error?.message || `Claude API HTTP ${res.status}` }, 502);
+    }
+    let text = "";
+    for (const block of data.content || []) {
+      if (block.type === "text" && block.text) text += block.text;
+    }
+    return json({ answer: text.trim() || "(empty)" });
+  } catch (e) {
+    console.error("completeChat", e);
+    return json({ error: "Unexpected server error." }, 500);
   }
-  clearTimeout(tid);
-  const raw = await res.text();
-  let data;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    return json({ error: "Claude returned non-JSON (check API key and model)." }, 502);
-  }
-  if (!res.ok) {
-    return json({ error: data.error?.message || `Claude API HTTP ${res.status}` }, 502);
-  }
-  let text = "";
-  for (const block of data.content || []) {
-    if (block.type === "text" && block.text) text += block.text;
-  }
-  return json({ answer: text.trim() || "(empty)" });
 }
 __name(completeChat, "completeChat");
+function messageFromGetUrl(url) {
+  if (url.searchParams.has("b")) {
+    const b = url.searchParams.get("b") ?? "";
+    const decoded = decodeB64Url(b);
+    if (decoded === null) {
+      return { error: json({ error: "Invalid b (base64url UTF-8)." }, 400) };
+    }
+    const msg = decoded.trim();
+    if (!msg) {
+      return { error: json({ error: "Empty message." }, 400) };
+    }
+    return { message: msg };
+  }
+  const plain = (url.searchParams.get("t") || url.searchParams.get("message") || "").trim();
+  return { message: plain };
+}
+__name(messageFromGetUrl, "messageFromGetUrl");
 async function onRequest(context) {
   const { request, env } = context;
   if (request.method === "OPTIONS") {
@@ -113,19 +155,24 @@ async function onRequest(context) {
   }
   const url = new URL(request.url);
   if (request.method === "GET") {
-    const msg = (url.searchParams.get("message") || "").trim();
-    if (msg) {
+    const parsed = messageFromGetUrl(url);
+    if (parsed.error) return parsed.error;
+    if (parsed.message) {
       try {
-        return await completeChat(env, msg);
+        return await completeChat(env, parsed.message);
       } catch (e) {
         console.error("chat GET", e);
         return json({ error: "Unexpected server error." }, 500);
       }
     }
-    return json({ ok: true, route: "/api/v1/chat", hint: "Add ?message=\u2026 for chat (browser-friendly)." });
+    return json({
+      ok: true,
+      route: "/api/v1/chat",
+      hint: "WAF often blocks ?message=\u2026. Use ?b=<base64url UTF-8> (chat.html does this) or POST."
+    });
   }
   if (request.method !== "POST") {
-    return json({ error: "Use GET ?message=\u2026 or POST." }, 405);
+    return json({ error: "Use GET ?b=\u2026 or POST." }, 405);
   }
   try {
     if (url.searchParams.get("__health") === "1") {
@@ -642,7 +689,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-pONsPe/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-NcBC58/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -674,7 +721,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-pONsPe/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-NcBC58/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

@@ -54,9 +54,15 @@
         <button type="submit">Send</button>
     </form>
     <p id="err"></p>
-    <p style="font-size:0.8rem;color:#666;margin-top:1rem">Uses GET (not POST) so Cloudflare doesn’t block the browser. Don’t paste secrets; text may appear in URL history.</p>
+    <p style="font-size:0.8rem;color:#666;margin-top:1rem">Sends GET with <code>b</code> = base64 (not <code>message=</code>) so Cloudflare WAF doesn’t block the URL. Don’t paste secrets.</p>
 
     <script>
+        function utf8ToB64Url(s) {
+            var u8 = new TextEncoder().encode(s);
+            var bin = '';
+            for (var i = 0; i < u8.length; i++) bin += String.fromCharCode(u8[i]);
+            return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        }
         var log = document.getElementById('log');
         var err = document.getElementById('err');
         document.getElementById('f').addEventListener('submit', async function (e) {
@@ -68,14 +74,12 @@
             input.value = '';
             log.textContent += 'You: ' + text + '\n\n';
             try {
-                // GET avoids browser POST being blocked by Cloudflare Bot Fight (curl POST still works).
-                if (text.length > 1800) {
-                    err.textContent = 'Message too long for this page (max ~1800 characters).';
+                if (text.length > 1200) {
+                    err.textContent = 'Message too long (max ~1200 characters for this page).';
                     return;
                 }
-                var params = new URLSearchParams();
-                params.set('message', text);
-                var res = await fetch('/api/v1/chat?' + params.toString(), {
+                var b = utf8ToB64Url(text);
+                var res = await fetch('/api/v1/chat?b=' + encodeURIComponent(b), {
                     method: 'GET',
                     mode: 'same-origin',
                 });

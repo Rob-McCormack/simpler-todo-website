@@ -10,7 +10,7 @@ Official references:
 
 ## What this repo does
 
-- `public/chat.html` — **`GET /api/v1/chat?message=…`** from the browser (avoids Bot Fight blocking browser POSTs; see paragraph below).
+- `public/chat.html` — **`GET /api/v1/chat?b=<base64url>`** — plain `?message=` in the URL is often blocked by **WAF** (502 before the Worker). `b` carries the UTF-8 text encoded.
 - `functions/api/v1/chat.js` — Pages Function at `/api/v1/chat`; it calls Anthropic with `ANTHROPIC_API_KEY`.
 
 **Browser vs curl:** If `curl` POST works but the site shows **502 HTML** on submit, Cloudflare **Bot Fight** (or similar) is often blocking **browser POSTs** only. This project’s **`chat.html` uses `GET ?message=…`** so the browser matches the same path as “ping” GETs. **Tradeoff:** the prompt can appear in URLs, referrer logs, and history. To use POST from the browser again: **Security → Bots** (or **WAF**) in Cloudflare and allow **`/api/v1/chat`** or lower sensitivity for your zone.

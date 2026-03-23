@@ -1,9 +1,8 @@
 /**
  * /api/v1/chat
  *
- * Browser POST often returns Cloudflare HTML 502 while curl POST works — Bot Fight / WAF treats
- * browser POSTs differently. The page uses GET ?message=… (same logic as POST; URLs can appear
- * in logs — prefer POST from curl/scripts, or relax Bots in Cloudflare for /api/*).
+ * Plain GET ?message=… or ?t=… is often blocked by Cloudflare WAF before the Worker runs (502 HTML).
+ * Browser uses ?b=<base64url UTF-8> instead. POST still works for curl/scripts.
  */
 
 const DEFAULT_MODEL = "claude-3-5-haiku-20241022";
@@ -28,6 +27,21 @@ function json(data, status = 200) {
   });
 }
 
+/** Decode base64url (UTF-8). Returns null on bad input. */
+function decodeB64Url(b64url) {
+  if (!b64url || typeof b64url !== "string") return null;
+  try {
+    const pad = (4 - (b64url.length % 4)) % 4;
+    const std = b64url.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat(pad);
+    const bin = atob(std);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return null;
+  }
+}
+
 function parseMessageFromBody(request, rawBody) {
   const ct = (request.headers.get("content-type") || "").toLowerCase();
   if (ct.includes("application/x-www-form-urlencoded")) {
@@ -43,75 +57,104 @@ function parseMessageFromBody(request, rawBody) {
 }
 
 async function completeChat(env, message) {
-  const key = typeof env.ANTHROPIC_API_KEY === "string" ? env.ANTHROPIC_API_KEY.trim() : "";
-  if (!key) {
-    return json(
-      {
-        error:
-          "ANTHROPIC_API_KEY is not set (Pages → Settings → Variables and Secrets → Production).",
-      },
-      503,
-    );
-  }
-
-  const trimmed = (message || "").trim();
-  if (!trimmed) {
-    return json({ error: "Missing message." }, 400);
-  }
-  if (trimmed.length > MAX_MESSAGE) {
-    return json({ error: `Message too long (max ${MAX_MESSAGE} characters).` }, 400);
-  }
-
-  const model = (typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim()) || DEFAULT_MODEL;
-
-  const controller = new AbortController();
-  const tid = setTimeout(() => controller.abort(), UPSTREAM_MS);
-
-  let res;
   try {
-    res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 1024,
-        system: "You are a helpful assistant for SimplerToDo. Be brief.",
-        messages: [{ role: "user", content: trimmed }],
-      }),
-    });
-  } catch (e) {
+    const key = typeof env.ANTHROPIC_API_KEY === "string" ? env.ANTHROPIC_API_KEY.trim() : "";
+    if (!key) {
+      return json(
+        {
+          error:
+            "ANTHROPIC_API_KEY is not set (Pages → Settings → Variables and Secrets → Production).",
+        },
+        503,
+      );
+    }
+
+    const trimmed = (message || "").trim();
+    if (!trimmed) {
+      return json({ error: "Missing message." }, 400);
+    }
+    if (trimmed.length > MAX_MESSAGE) {
+      return json({ error: `Message too long (max ${MAX_MESSAGE} characters).` }, 400);
+    }
+
+    const model = (typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim()) || DEFAULT_MODEL;
+
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), UPSTREAM_MS);
+
+    let res;
+    try {
+      res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 1024,
+          system: "You are a helpful assistant for SimplerToDo. Be brief.",
+          messages: [{ role: "user", content: trimmed }],
+        }),
+      });
+    } catch (e) {
+      clearTimeout(tid);
+      const aborted = e && (e.name === "AbortError" || e.name === "TimeoutError");
+      console.error("chat upstream fetch", e);
+      return json(
+        { error: aborted ? "Claude API took too long. Try again." : "Could not reach Claude API." },
+        502,
+      );
+    }
     clearTimeout(tid);
-    const aborted = e && (e.name === "AbortError" || e.name === "TimeoutError");
-    console.error("chat upstream fetch", e);
-    return json(
-      { error: aborted ? "Claude API took too long. Try again." : "Could not reach Claude API." },
-      502,
-    );
-  }
-  clearTimeout(tid);
 
-  const raw = await res.text();
-  let data;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    return json({ error: "Claude returned non-JSON (check API key and model)." }, 502);
-  }
+    let raw;
+    try {
+      raw = await res.text();
+    } catch (e) {
+      console.error("chat res.text", e);
+      return json({ error: "Bad response from Claude." }, 502);
+    }
 
-  if (!res.ok) {
-    return json({ error: data.error?.message || `Claude API HTTP ${res.status}` }, 502);
-  }
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return json({ error: "Claude returned non-JSON (check API key and model)." }, 502);
+    }
 
-  let text = "";
-  for (const block of data.content || []) {
-    if (block.type === "text" && block.text) text += block.text;
+    if (!res.ok) {
+      return json({ error: data.error?.message || `Claude API HTTP ${res.status}` }, 502);
+    }
+
+    let text = "";
+    for (const block of data.content || []) {
+      if (block.type === "text" && block.text) text += block.text;
+    }
+    return json({ answer: text.trim() || "(empty)" });
+  } catch (e) {
+    console.error("completeChat", e);
+    return json({ error: "Unexpected server error." }, 500);
   }
-  return json({ answer: text.trim() || "(empty)" });
+}
+
+function messageFromGetUrl(url) {
+  if (url.searchParams.has("b")) {
+    const b = url.searchParams.get("b") ?? "";
+    const decoded = decodeB64Url(b);
+    if (decoded === null) {
+      return { error: json({ error: "Invalid b (base64url UTF-8)." }, 400) };
+    }
+    const msg = decoded.trim();
+    if (!msg) {
+      return { error: json({ error: "Empty message." }, 400) };
+    }
+    return { message: msg };
+  }
+  const plain = (url.searchParams.get("t") || url.searchParams.get("message") || "").trim();
+  return { message: plain };
 }
 
 export async function onRequest(context) {
@@ -130,20 +173,25 @@ export async function onRequest(context) {
   const url = new URL(request.url);
 
   if (request.method === "GET") {
-    const msg = (url.searchParams.get("message") || "").trim();
-    if (msg) {
+    const parsed = messageFromGetUrl(url);
+    if (parsed.error) return parsed.error;
+    if (parsed.message) {
       try {
-        return await completeChat(env, msg);
+        return await completeChat(env, parsed.message);
       } catch (e) {
         console.error("chat GET", e);
         return json({ error: "Unexpected server error." }, 500);
       }
     }
-    return json({ ok: true, route: "/api/v1/chat", hint: "Add ?message=… for chat (browser-friendly)." });
+    return json({
+      ok: true,
+      route: "/api/v1/chat",
+      hint: "WAF often blocks ?message=…. Use ?b=<base64url UTF-8> (chat.html does this) or POST.",
+    });
   }
 
   if (request.method !== "POST") {
-    return json({ error: "Use GET ?message=… or POST." }, 405);
+    return json({ error: "Use GET ?b=… or POST." }, 405);
   }
 
   try {
