@@ -1,25 +1,18 @@
-# Cloudflare Pages — config is Git-managed; plain env vars live here.
-# Dashboard: only encrypted "Secrets" can be added there (see Cloudflare notice).
+# Cloudflare Pages — https://developers.cloudflare.com/pages/functions/wrangler-configuration/
 #
-# Docs: https://developers.cloudflare.com/pages/functions/wrangler-configuration/
-
-name = "simpler-todo-website"
-pages_build_output_dir = "."
-compatibility_date = "2025-03-01"
-
-# Anthropic API key from account Secrets Store (async .get() in functions/api/help.js).
-# Store ID: Secrets Store → your store → copy ID. Secret name must match what you created.
-[[secrets_store_secrets]]
-binding = "ANTHROPIC_API_KEY"
-store_id = "5c9dde4707bb474fbb9fd628c73da524"
-secret_name = "ANTHROPIC_API_KEY"
-
-# Rate limiting — uncomment and set a real KV namespace id (Workers & Pages → KV → copy ID).
-# Invalid ids fail deploy. If KV is already bound in the dashboard only, ask Cloudflare docs whether to duplicate here.
+# Account "Secrets Store" (dash → Secrets Store) is NOT the same as Pages Function secrets.
+# Pages wrangler does not document secrets_store_secrets; that binding is for Workers. Your
+# Functions read env.ANTHROPIC_API_KEY as a string from **this Pages project**:
+#
+#   • Dashboard: Workers & Pages → this project → Settings → Variables and Secrets
+#     → Production → Add → name ANTHROPIC_API_KEY → Encrypt → paste API key → Save → redeploy.
+#   • Or CLI: npx wrangler pages secret put ANTHROPIC_API_KEY --project-name=simpler-todo-website
+#
+# KV: uncomment with your real namespace id (Workers & Pages → KV).
 # [[kv_namespaces]]
 # binding = "HELP_RATE_LIMIT"
 # id = "YOUR_KV_NAMESPACE_ID"
 
-# Optional non-secret:
-# [vars]
-# ANTHROPIC_MODEL = "claude-haiku-4-5"
+name = "simpler-todo-website"
+pages_build_output_dir = "."
+compatibility_date = "2025-03-01"

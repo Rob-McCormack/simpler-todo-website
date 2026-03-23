@@ -9,7 +9,8 @@ alwaysApply: false
 # Help API (`/api/help`)
 
 - Implemented as a **Cloudflare Pages Function** at `functions/api/help.js`. It runs on **Cloudflare** for every deployment of this project (production domain, preview branches, `*.pages.dev`), not only `simplertodo.com`. There is **no hostname allowlist** in code unless you add one.
-- **Secrets** (`ANTHROPIC_API_KEY`, KV `HELP_RATE_LIMIT`) are configured in the **Cloudflare Pages** project, not in the repo.
+- **`ANTHROPIC_API_KEY`**: set on the **Pages project** (encrypted secret in **Variables and Secrets**, or `wrangler pages secret put`). Account-level **Secrets Store** alone does not populate `env` for Pages Functions unless Cloudflare adds documented support.
+- **KV** `HELP_RATE_LIMIT`: bind in Pages (wrangler `[[kv_namespaces]]` with real id, or dashboard per project docs).
 
 ## Local development
 
