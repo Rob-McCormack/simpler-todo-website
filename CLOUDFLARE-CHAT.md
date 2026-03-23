@@ -10,7 +10,7 @@ Official references:
 
 ## What this repo does
 
-- `public/chat.html` — simple browser UI; it `POST`s JSON to `/api/v1/chat`.
+- `public/chat.html` — `POST`s **`application/x-www-form-urlencoded`** (`message=…`) to `/api/v1/chat` (avoids some WAF rules that target JSON POST bodies).
 - `functions/api/v1/chat.js` — Pages Function at `/api/v1/chat`; it calls Anthropic with `ANTHROPIC_API_KEY`.
 
 (The path is `/api/v1/chat` instead of `/api/chat` so POST is less likely to be blocked by some WAF/bot rules that still allow GET on `/api/chat`.)

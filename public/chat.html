@@ -67,10 +67,14 @@
             input.value = '';
             log.textContent += 'You: ' + text + '\n\n';
             try {
+                // Form body (not JSON) — some Cloudflare WAF rules block application/json POSTs to APIs.
+                var params = new URLSearchParams();
+                params.set('message', text);
                 var res = await fetch('/api/v1/chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text }),
+                    mode: 'same-origin',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                    body: params.toString(),
                 });
                 var raw = await res.text();
                 var data = {};

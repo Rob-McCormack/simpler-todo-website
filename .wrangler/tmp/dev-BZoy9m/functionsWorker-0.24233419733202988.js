@@ -5,19 +5,50 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 var __defProp2 = Object.defineProperty;
 var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
 var DEFAULT_MODEL = "claude-3-5-haiku-20241022";
+var UPSTREAM_MS = 45e3;
+var CORS_HEADERS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, POST, OPTIONS",
+  "access-control-allow-headers": "content-type"
+};
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store"
+      "cache-control": "no-store",
+      ...CORS_HEADERS
     }
   });
 }
 __name(json, "json");
 __name2(json, "json");
+function parseMessageFromBody(request, rawBody) {
+  const ct = (request.headers.get("content-type") || "").toLowerCase();
+  if (ct.includes("application/x-www-form-urlencoded")) {
+    const params = new URLSearchParams(rawBody);
+    return (params.get("message") || "").trim();
+  }
+  try {
+    const body = rawBody ? JSON.parse(rawBody) : {};
+    return typeof body.message === "string" ? body.message.trim() : "";
+  } catch {
+    return null;
+  }
+}
+__name(parseMessageFromBody, "parseMessageFromBody");
+__name2(parseMessageFromBody, "parseMessageFromBody");
 async function onRequest(context) {
   const { request, env } = context;
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        ...CORS_HEADERS,
+        "access-control-max-age": "86400"
+      }
+    });
+  }
   if (request.method === "GET") {
     return json({ ok: true, route: "/api/v1/chat" });
   }
@@ -25,31 +56,35 @@ async function onRequest(context) {
     return json({ error: "Use POST" }, 405);
   }
   try {
+    const url = new URL(request.url);
+    if (url.searchParams.get("__health") === "1") {
+      return json({ ok: true, ping: "post-without-upstream" });
+    }
     const key = typeof env.ANTHROPIC_API_KEY === "string" ? env.ANTHROPIC_API_KEY.trim() : "";
     if (!key) {
       return json(
         {
-          error: "ANTHROPIC_API_KEY is not set on this Pages project (Variables and Secrets \u2192 Production)."
+          error: "ANTHROPIC_API_KEY is not set (Pages \u2192 Settings \u2192 Variables and Secrets \u2192 Production)."
         },
         503
       );
     }
     const rawBody = await request.text();
-    let body;
-    try {
-      body = rawBody ? JSON.parse(rawBody) : {};
-    } catch {
-      return json({ error: "Invalid JSON body." }, 400);
+    const message = parseMessageFromBody(request, rawBody);
+    if (message === null) {
+      return json({ error: "Invalid body (use form field message=\u2026 or JSON {message})." }, 400);
     }
-    const message = typeof body.message === "string" ? body.message.trim() : "";
     if (!message) {
       return json({ error: "Missing message." }, 400);
     }
     const model = typeof env.ANTHROPIC_MODEL === "string" && env.ANTHROPIC_MODEL.trim() || DEFAULT_MODEL;
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), UPSTREAM_MS);
     let res;
     try {
       res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
+        signal: controller.signal,
         headers: {
           "content-type": "application/json",
           "x-api-key": key,
@@ -63,9 +98,15 @@ async function onRequest(context) {
         })
       });
     } catch (e) {
-      console.error("chat fetch", e);
-      return json({ error: "Could not reach Claude API." }, 502);
+      clearTimeout(tid);
+      const aborted = e && (e.name === "AbortError" || e.name === "TimeoutError");
+      console.error("chat upstream fetch", e);
+      return json(
+        { error: aborted ? "Claude API took too long. Try again." : "Could not reach Claude API." },
+        502
+      );
     }
+    clearTimeout(tid);
     const raw = await res.text();
     let data;
     try {
