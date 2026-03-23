@@ -1,5 +1,9 @@
 # Cloudflare Pages — https://developers.cloudflare.com/pages/functions/wrangler-configuration/
 #
+# Static HTML/CSS/assets must live under public/ (see pages_build_output_dir). If the dashboard
+# has a "Build output directory" override, set it to public to match this file after deploy.
+# Local preview: npx wrangler pages dev (from repo root; uses wrangler.toml)
+#
 # Account "Secrets Store" (dash → Secrets Store) is NOT the same as Pages Function secrets.
 # Pages wrangler does not document secrets_store_secrets; that binding is for Workers. Your
 # Functions read env.ANTHROPIC_API_KEY as a string from **this Pages project**:
@@ -15,5 +19,6 @@
 # id = "paste-your-kv-namespace-id-here"
 
 name = "simpler-todo-website"
-pages_build_output_dir = "."
-compatibility_date = "2025-03-01"
+# Static assets live in public/; functions/ stays at repo root (Pages + Functions standard layout).
+pages_build_output_dir = "public"
+compatibility_date = "2024-11-01"

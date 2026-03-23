@@ -68,28 +68,6 @@ function rateLimitKey(ip, date) {
   return `help:${ip}:${date}`;
 }
 
-/** Avoid Worker wall-clock timeout (edge returns HTML 502) if Anthropic is slow or hangs. */
-const ANTHROPIC_FETCH_MS = 55_000;
-
-async function fetchAnthropicMessages(apiKey, body) {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), ANTHROPIC_FETCH_MS);
-  try {
-    return await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify(body),
-    });
-  } finally {
-    clearTimeout(t);
-  }
-}
-
 /**
  * Pages "Variables and Secrets" → string on env.
  * Secrets Store → binding with same name; value via await binding.get()
@@ -175,16 +153,23 @@ async function handlePost(context) {
 
   let anthropicRes;
   try {
-    anthropicRes = await fetchAnthropicMessages(apiKey, {
-      model,
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: message }],
+    anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: message }],
+      }),
     });
   } catch (e) {
-    const msg = e && e.name === "AbortError" ? "Request to assistant timed out. Try again." : "Could not reach assistant. Try again.";
     console.error("help api: Anthropic fetch failed", e);
-    return jsonResponse({ error: msg }, 502);
+    return jsonResponse({ error: "Could not reach assistant. Try again." }, 502);
   }
 
   const anthropicText = await anthropicRes.text();

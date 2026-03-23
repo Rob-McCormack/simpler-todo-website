@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// .wrangler/tmp/pages-Z1lY0Y/functionsWorker-0.24233419733202988.mjs
+// .wrangler/tmp/pages-3Y5kVy/functionsWorker-0.584910902346951.mjs
 var __defProp2 = Object.defineProperty;
 var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
 var MAX_PER_DAY = 5;
@@ -69,27 +69,6 @@ function rateLimitKey(ip, date) {
 }
 __name(rateLimitKey, "rateLimitKey");
 __name2(rateLimitKey, "rateLimitKey");
-var ANTHROPIC_FETCH_MS = 55e3;
-async function fetchAnthropicMessages(apiKey, body) {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), ANTHROPIC_FETCH_MS);
-  try {
-    return await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify(body)
-    });
-  } finally {
-    clearTimeout(t);
-  }
-}
-__name(fetchAnthropicMessages, "fetchAnthropicMessages");
-__name2(fetchAnthropicMessages, "fetchAnthropicMessages");
 async function resolveAnthropicApiKey(env) {
   const v = env.ANTHROPIC_API_KEY;
   if (v == null) return "";
@@ -162,16 +141,23 @@ async function handlePost(context) {
   const model = env.ANTHROPIC_MODEL || "claude-3-5-haiku-20241022";
   let anthropicRes;
   try {
-    anthropicRes = await fetchAnthropicMessages(apiKey, {
-      model,
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: message }]
+    anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: message }]
+      })
     });
   } catch (e) {
-    const msg = e && e.name === "AbortError" ? "Request to assistant timed out. Try again." : "Could not reach assistant. Try again.";
     console.error("help api: Anthropic fetch failed", e);
-    return jsonResponse({ error: msg }, 502);
+    return jsonResponse({ error: "Could not reach assistant. Try again." }, 502);
   }
   const anthropicText = await anthropicRes.text();
   let anthropicJson;
@@ -926,7 +912,7 @@ var jsonError2 = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx
 }, "jsonError");
 var middleware_miniflare3_json_error_default2 = jsonError2;
 
-// .wrangler/tmp/bundle-QkYVkg/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-mIYyYC/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__2 = [
   middleware_ensure_req_body_drained_default2,
   middleware_miniflare3_json_error_default2
@@ -958,7 +944,7 @@ function __facade_invoke__2(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__2, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-QkYVkg/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-mIYyYC/middleware-loader.entry.ts
 var __Facade_ScheduledController__2 = class ___Facade_ScheduledController__2 {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
@@ -1058,4 +1044,4 @@ export {
   __INTERNAL_WRANGLER_MIDDLEWARE__2 as __INTERNAL_WRANGLER_MIDDLEWARE__,
   middleware_loader_entry_default2 as default
 };
-//# sourceMappingURL=functionsWorker-0.24233419733202988.js.map
+//# sourceMappingURL=functionsWorker-0.584910902346951.js.map
