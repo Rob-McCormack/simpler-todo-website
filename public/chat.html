@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-chat-api="">
 
 <head>
     <meta charset="utf-8" />
@@ -54,9 +54,19 @@
         <button type="submit">Send</button>
     </form>
     <p id="err"></p>
-    <p style="font-size:0.8rem;color:#666;margin-top:1rem">Tries <code>/api/v1/c</code> first (same logic as <code>/api/v1/chat</code>; a different path sometimes slips past WAF): POST JSON <code>b</code> (base64url), POST <code>text/plain</code>, GET + <code>X-Chat-B</code>, then repeats for <code>/api/v1/chat</code>. Stops on the first JSON response. If every attempt returns HTML, add a WAF skip for these paths in the Cloudflare dashboard. Don’t paste secrets.</p>
+    <p style="font-size:0.8rem;color:#666;margin-top:1rem">Account-level WAF can block <code>/api/v1/*</code> before the Worker. Add a dashboard exception for that path, or deploy <code>workers/chat-proxy</code> and set <code>data-chat-api</code> on <code>&lt;html&gt;</code> or <code>localStorage.setItem('chatApiBase','https://…workers.dev')</code> and reload. Retries: <code>/api/v1/c</code> then <code>/api/v1/chat</code> (POST <code>b</code>, <code>text/plain</code>, GET <code>X-Chat-B</code>). Don’t paste secrets.</p>
 
     <script>
+        function chatApiBase() {
+            var a = (document.documentElement.getAttribute('data-chat-api') || '').trim();
+            if (a.endsWith('/')) a = a.slice(0, -1);
+            if (a) return a;
+            try {
+                a = (localStorage.getItem('chatApiBase') || '').trim();
+                if (a.endsWith('/')) a = a.slice(0, -1);
+            } catch (e) {}
+            return a;
+        }
         function utf8ToB64Url(s) {
             var u8 = new TextEncoder().encode(s);
             var bin = '';
@@ -78,52 +88,57 @@
                     err.textContent = 'Message too long (max 2000 characters).';
                     return;
                 }
+                var base = chatApiBase();
+                var mode = base ? 'cors' : 'same-origin';
+                function u(path) {
+                    return base ? base + path : path;
+                }
                 var b = utf8ToB64Url(text);
                 var attempts = [
                     function () {
-                        return fetch('/api/v1/c', {
+                        return fetch(u('/api/v1/c'), {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ b: b }),
-                            mode: 'same-origin',
+                            mode: mode,
                         });
                     },
                     function () {
-                        return fetch('/api/v1/c', {
+                        return fetch(u('/api/v1/c'), {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain; charset=utf-8' },
                             body: text,
-                            mode: 'same-origin',
+                            mode: mode,
                         });
                     },
                     function () {
-                        return fetch('/api/v1/c', {
+                        return fetch(u('/api/v1/c'), {
                             method: 'GET',
                             headers: { 'X-Chat-B': b },
-                            mode: 'same-origin',
+                            mode: mode,
                         });
                     },
                     function () {
-                        return fetch('/api/v1/chat', {
+                        return fetch(u('/api/v1/chat'), {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ b: b }),
-                            mode: 'same-origin',
+                            mode: mode,
                         });
                     },
                     function () {
-                        return fetch('/api/v1/chat', {
+                        return fetch(u('/api/v1/chat'), {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain; charset=utf-8' },
                             body: text,
-                            mode: 'same-origin',
+                            mode: mode,
                         });
                     },
                     function () {
-                        return fetch('/api/v1/chat', {
+                        return fetch(u('/api/v1/chat'), {
                             method: 'GET',
                             headers: { 'X-Chat-B': b },
-                            mode: 'same-origin',
+                            mode: mode,
                         });
                     },
                 ];

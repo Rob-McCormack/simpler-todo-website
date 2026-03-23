@@ -53,12 +53,17 @@
         <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off">
         <button type="button" onclick="sendMessage()">Send</button>
     </div>
-    <p style="font-size:0.8rem;color:#666;margin-top:10px">If every try returns HTML, your zone WAF is blocking the API before the Worker runs. Set <code>data-chat-api</code> on <code>&lt;html&gt;</code> to a deployed <code>workers/chat-proxy</code> URL, or add a WAF skip for <code>/api/v1/*</code> in the Cloudflare dashboard.</p>
+    <p style="font-size:0.8rem;color:#666;margin-top:10px"><b>Account-level WAF</b> runs before Workers: add a <b>skip / exception</b> for your site hostname and URI Path <code>/api/v1/*</code> (or lower score for that path). Or deploy <code>workers/chat-proxy</code>, then either set <code>data-chat-api</code> on <code>&lt;html&gt;</code> or once in the console: <code>localStorage.setItem('chatApiBase','https://…workers.dev')</code> (no trailing slash) and reload.</p>
 
     <script>
-        function apiBase() {
+        function chatApiBase() {
             var a = (document.documentElement.getAttribute('data-chat-api') || '').trim();
             if (a.endsWith('/')) a = a.slice(0, -1);
+            if (a) return a;
+            try {
+                a = (localStorage.getItem('chatApiBase') || '').trim();
+                if (a.endsWith('/')) a = a.slice(0, -1);
+            } catch (e) {}
             return a;
         }
 
@@ -95,7 +100,7 @@
             appendLine('user', 'You: ', text);
             input.value = '';
 
-            var base = apiBase();
+            var base = chatApiBase();
             var mode = base ? 'cors' : 'same-origin';
             function u(path) {
                 return base ? base + path : path;
@@ -171,7 +176,7 @@
                     appendLine(
                         'ai',
                         'Error: ',
-                        'All 6 requests returned non-JSON (Cloudflare HTML = WAF before Worker). Set data-chat-api to workers.dev proxy or WAF skip for /api/v1/*. Snippet: ' +
+                        'All 6 requests returned non-JSON (account WAF before Worker). Add a WAF skip for /api/v1/* on this hostname, or deploy workers/chat-proxy and set localStorage chatApiBase to your *.workers.dev URL. Snippet: ' +
                             raw.slice(0, 100),
                         'red',
                     );
