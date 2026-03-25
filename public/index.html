@@ -5,14 +5,19 @@
     <meta charset="UTF-8" />
     <script>
         (function () {
+            var KEY = 'simplertodo.colorMode';
             var mode = 'light';
             try {
-                var cs = localStorage.getItem('colorScheme');
-                if (cs === 'light' || cs === 'dark') {
-                    mode = cs;
+                var v = localStorage.getItem(KEY);
+                if (v === 'light' || v === 'dark') {
+                    mode = v;
                 } else {
-                    var old = localStorage.getItem('theme');
-                    if (old === 'forest' || old === 'dark') mode = 'dark';
+                    var cs = localStorage.getItem('colorScheme');
+                    if (cs === 'light' || cs === 'dark') mode = cs;
+                    else {
+                        var old = localStorage.getItem('theme');
+                        if (old === 'forest' || old === 'dark') mode = 'dark';
+                    }
                 }
             } catch (e) { }
             document.documentElement.setAttribute('data-theme', mode === 'dark' ? 'forest' : 'emerald');
@@ -175,14 +180,16 @@
                             <li><a href="#pricing" class="nav-anchor">Open Source</a></li>
                         </ul>
                         <div class="divider my-1"></div>
-                        <div class="px-3 py-2 flex items-center justify-between gap-3">
+                        <div class="px-3 py-2 flex items-center justify-between gap-3 theme-mode-row"
+                            onpointerdown="event.stopPropagation()">
                             <div class="min-w-0">
                                 <p class="text-sm font-medium leading-tight">Dark mode</p>
                                 <p class="text-xs opacity-60 leading-tight mt-0.5">Light: Emerald · Dark: Forest</p>
                             </div>
                             <input type="checkbox" class="toggle toggle-sm toggle-primary shrink-0"
                                 id="theme-mode-toggle" title="Toggle dark mode (Forest theme)"
-                                aria-label="Toggle dark mode" />
+                                aria-label="Toggle dark mode"
+                                onchange="applyColorScheme(this.checked ? 'dark' : 'light')" />
                         </div>
                     </div>
                 </div>
@@ -786,12 +793,15 @@
     </div>
 
     <script>
-        // ── Light (Emerald) / Dark (Forest); preference in localStorage colorScheme ──
+        // ── Light (Emerald) / Dark (Forest); namespaced key avoids clashes with old theme keys ──
         var THEME_LIGHT = 'emerald';
         var THEME_DARK = 'forest';
+        var COLOR_MODE_KEY = 'simplertodo.colorMode';
 
         function getColorScheme() {
             try {
+                var v = localStorage.getItem(COLOR_MODE_KEY);
+                if (v === 'light' || v === 'dark') return v;
                 var cs = localStorage.getItem('colorScheme');
                 if (cs === 'light' || cs === 'dark') return cs;
                 var old = localStorage.getItem('theme');
@@ -805,7 +815,8 @@
             var daisy = mode === 'dark' ? THEME_DARK : THEME_LIGHT;
             document.documentElement.setAttribute('data-theme', daisy);
             try {
-                localStorage.setItem('colorScheme', mode);
+                localStorage.setItem(COLOR_MODE_KEY, mode);
+                localStorage.removeItem('colorScheme');
                 localStorage.removeItem('theme');
             } catch (e) { }
             var t = document.getElementById('theme-mode-toggle');
@@ -814,12 +825,6 @@
 
         (function () {
             applyColorScheme(getColorScheme());
-            var t = document.getElementById('theme-mode-toggle');
-            if (t) {
-                t.addEventListener('change', function () {
-                    applyColorScheme(t.checked ? 'dark' : 'light');
-                });
-            }
         })();
     </script>
     <script>

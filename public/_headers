@@ -1,0 +1,4 @@
+# Avoid long-lived cached HTML so theme / script updates reach repeat visitors quickly.
+# (Static assets keep the CDN default unless you add more rules.)
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
