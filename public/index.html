@@ -131,13 +131,13 @@
     </style>
 </head>
 
-<body class="min-h-screen bg-base-100 text-base-content pb-28 sm:pb-0">
+<body class="min-h-screen bg-base-100 text-base-content pb-24 md:pb-6">
 
     <!-- ───────────────── NAVBAR ───────────────── -->
     <div class="sticky top-0 z-50 border-b border-base-200 bg-base-100/80 backdrop-blur-md">
-        <div class="navbar min-h-0">
+        <div class="navbar min-h-14 px-2">
             <div class="navbar-start">
-                <a href="/" class="flex items-center gap-2 ml-2">
+                <a href="/" class="flex items-center gap-2 ml-1">
                     <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary-content" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -148,64 +148,64 @@
                     <span class="font-semibold text-base tracking-tight">SimplerToDo</span>
                 </a>
             </div>
-            <div class="navbar-center hidden md:flex">
-                <ul class="menu menu-horizontal gap-1 text-sm">
-                    <li><a href="#features" class="rounded-lg font-medium">Features</a></li>
-                    <li><a href="#screenshots" class="rounded-lg font-medium">Screenshots</a></li>
-                    <li><a href="#compare" class="rounded-lg font-medium">Data Ownership</a></li>
-                    <li><a href="#pricing" class="rounded-lg font-medium">Open Source</a></li>
-                    <li>
-                        <a href="https://help.simplertodo.com/" class="rounded-lg font-medium" target="_blank"
-                            rel="noopener noreferrer" title="Help center — opens in a new tab">Help</a>
-                    </li>
-                    <li>
-                        <a href="https://assistant.simplertodo.com/" class="rounded-lg font-medium" target="_blank"
-                            rel="noopener noreferrer" title="Opens in a new tab">Assistant</a>
-                    </li>
-                </ul>
-            </div>
-            <div class="navbar-end gap-2 mr-2">
-                <!-- Theme picker -->
-                <select id="theme-select" class="select select-sm rounded-lg font-medium" title="Change theme"
-                    onchange="applyTheme(this.value, event)">
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="cupcake">Cupcake</option>
-                    <option value="bumblebee">Bumblebee</option>
-                    <option value="emerald">Emerald</option>
-                    <option value="corporate">Corporate</option>
-                    <option value="synthwave">Synthwave</option>
-                    <option value="retro">Retro</option>
-                    <option value="cyberpunk">Cyberpunk</option>
-                    <option value="valentine">Valentine</option>
-                    <option value="halloween">Halloween</option>
-                    <option value="garden">Garden</option>
-                    <option value="forest">Forest</option>
-                    <option value="aqua">Aqua</option>
-                    <option value="lofi">Lofi</option>
-                    <option value="pastel">Pastel</option>
-                    <option value="fantasy">Fantasy</option>
-                    <option value="wireframe">Wireframe</option>
-                    <option value="black">Black</option>
-                    <option value="luxury">Luxury</option>
-                    <option value="dracula">Dracula</option>
-                    <option value="cmyk">CMYK</option>
-                    <option value="autumn">Autumn</option>
-                    <option value="business">Business</option>
-                    <option value="acid">Acid</option>
-                    <option value="lemonade">Lemonade</option>
-                    <option value="night">Night</option>
-                    <option value="coffee">Coffee</option>
-                    <option value="winter">Winter</option>
-                    <option value="dim">Dim</option>
-                    <option value="nord">Nord</option>
-                    <option value="sunset">Sunset</option>
-                </select>
-                <a href="https://help.simplertodo.com/" class="btn btn-secondary btn-sm rounded-lg shrink-0"
-                    target="_blank" rel="noopener noreferrer" title="Guides &amp; docs — help.simplertodo.com">Help center</a>
-                <a href="https://assistant.simplertodo.com/" class="btn btn-outline btn-sm rounded-lg shrink-0"
-                    target="_blank" rel="noopener noreferrer" title="AI chat — opens in a new tab">Assistant</a>
-                <a href="https://app.simplertodo.com/" class="btn btn-primary btn-sm rounded-lg shrink-0">Get Started</a>
+            <div class="navbar-end gap-2">
+                <a href="https://app.simplertodo.com/" class="btn btn-primary btn-sm">Get Started</a>
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-square" aria-label="Open menu">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <path d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </div>
+                    <div tabindex="0"
+                        class="dropdown-content z-[100] mt-3 w-64 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg max-h-[min(24rem,85vh)] overflow-y-auto">
+                        <ul class="menu menu-sm w-full p-0">
+                            <li><a href="#features" class="nav-anchor">Features</a></li>
+                            <li><a href="#screenshots" class="nav-anchor">Screenshots</a></li>
+                            <li><a href="#compare" class="nav-anchor">Data Ownership</a></li>
+                            <li><a href="#pricing" class="nav-anchor">Open Source</a></li>
+                        </ul>
+                        <div class="divider my-1"></div>
+                        <p class="px-3 pt-1 text-xs font-semibold uppercase tracking-wide opacity-60">Theme</p>
+                        <div class="px-2 pb-2">
+                            <select id="theme-select" class="select select-bordered select-sm w-full max-w-full"
+                                title="Change theme" onchange="applyTheme(this.value, event)">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="cupcake">Cupcake</option>
+                                <option value="bumblebee">Bumblebee</option>
+                                <option value="emerald">Emerald</option>
+                                <option value="corporate">Corporate</option>
+                                <option value="synthwave">Synthwave</option>
+                                <option value="retro">Retro</option>
+                                <option value="cyberpunk">Cyberpunk</option>
+                                <option value="valentine">Valentine</option>
+                                <option value="halloween">Halloween</option>
+                                <option value="garden">Garden</option>
+                                <option value="forest">Forest</option>
+                                <option value="aqua">Aqua</option>
+                                <option value="lofi">Lofi</option>
+                                <option value="pastel">Pastel</option>
+                                <option value="fantasy">Fantasy</option>
+                                <option value="wireframe">Wireframe</option>
+                                <option value="black">Black</option>
+                                <option value="luxury">Luxury</option>
+                                <option value="dracula">Dracula</option>
+                                <option value="cmyk">CMYK</option>
+                                <option value="autumn">Autumn</option>
+                                <option value="business">Business</option>
+                                <option value="acid">Acid</option>
+                                <option value="lemonade">Lemonade</option>
+                                <option value="night">Night</option>
+                                <option value="coffee">Coffee</option>
+                                <option value="winter">Winter</option>
+                                <option value="dim">Dim</option>
+                                <option value="nord">Nord</option>
+                                <option value="sunset">Sunset</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -241,24 +241,7 @@
                         </svg>
                         Open the app
                     </a>
-                    <a href="#features" class="btn btn-ghost rounded-lg border border-base-300">See how it works</a>
-                    <a href="https://help.simplertodo.com/" class="btn btn-secondary rounded-lg gap-2" target="_blank"
-                        rel="noopener noreferrer" title="help.simplertodo.com">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-90" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                        </svg>
-                        Help center
-                    </a>
-                    <a href="https://assistant.simplertodo.com/" class="btn btn-ghost rounded-lg border border-base-300 gap-2"
-                        target="_blank" rel="noopener noreferrer" title="Opens in a new tab">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                        Ask the assistant
-                    </a>
+                    <a href="#features" class="btn btn-ghost rounded-lg border border-base-300 nav-anchor">See how it works</a>
                 </div>
                 <p class="fade-up delay-5 text-xs text-base-content/40 mt-4">
                     No account. No server. No lock-in. You own your data.
@@ -806,27 +789,26 @@
         </form>
     </dialog>
 
-    <div class="sm:hidden fixed z-40 left-4 right-4 flex gap-2"
-        style="bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));">
-        <a href="https://help.simplertodo.com/"
-            class="btn btn-secondary flex-1 min-h-[3rem] shadow-lg rounded-xl gap-2 font-medium"
-            target="_blank" rel="noopener noreferrer" aria-label="Open help center at help.simplertodo.com">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-            Help
-        </a>
-        <a href="https://assistant.simplertodo.com/"
-            class="btn btn-primary flex-1 min-h-[3rem] shadow-lg rounded-xl gap-2 font-medium"
-            target="_blank" rel="noopener noreferrer" aria-label="Open SimplerToDo assistant in a new tab">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            Assistant
-        </a>
+    <div class="fixed z-40 right-4 flex flex-col gap-2 bottom-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+        <div class="tooltip tooltip-left" data-tip="Help center">
+            <a href="https://help.simplertodo.com/" class="btn btn-circle btn-sm btn-secondary shadow-md"
+                target="_blank" rel="noopener noreferrer" aria-label="Help center at help.simplertodo.com">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+            </a>
+        </div>
+        <div class="tooltip tooltip-left" data-tip="Assistant">
+            <a href="https://assistant.simplertodo.com/" class="btn btn-circle btn-sm btn-primary shadow-md"
+                target="_blank" rel="noopener noreferrer" aria-label="Open SimplerToDo assistant">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+            </a>
+        </div>
     </div>
 
     <script>
@@ -888,6 +870,17 @@
                     e.preventDefault();
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
+            });
+        });
+
+        // Close hamburger dropdown after in-page navigation (DaisyUI dropdown uses focus)
+        document.querySelectorAll('.nav-anchor').forEach(function (a) {
+            a.addEventListener('click', function () {
+                setTimeout(function () {
+                    if (document.activeElement && document.activeElement.closest('.dropdown')) {
+                        document.activeElement.blur();
+                    }
+                }, 0);
             });
         });
     </script>
