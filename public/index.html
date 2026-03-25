@@ -13,10 +13,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SimplerToDo — Free, Open Source, Local-Only To-Do App</title>
     <meta name="description" content="Free and open source to-do app. Your data stays only on your device. Export anytime to plain text, rich text, Markdown, or JSON." />
-    <!-- Favicon (PNG must live at public/app-icon-64.png for deploy) -->
-    <link rel="icon" type="image/png" sizes="64x64" href="/app-icon-64.png" />
-    <link rel="apple-touch-icon" href="/app-icon-64.png" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <!-- Optional: add public/app-icon-64.png and uncomment for PNG / iOS home screen -->
+    <!-- <link rel="icon" type="image/png" sizes="64x64" href="/app-icon-64.png" /> -->
+    <!-- <link rel="apple-touch-icon" href="/app-icon-64.png" /> -->
 
     <!-- Open Graph (Facebook, LinkedIn, etc.) -->
     <meta property="og:type" content="website" />
@@ -140,8 +140,12 @@
         <div class="navbar min-h-14 px-2">
             <div class="navbar-start">
                 <a href="/" class="flex items-center gap-2 ml-1">
-                    <img src="/app-icon-64.png" alt="" width="32" height="32" decoding="async"
-                        class="h-8 w-8 rounded-lg object-contain shrink-0" />
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" class="h-8 w-8 shrink-0"
+                        width="32" height="32" aria-hidden="true">
+                        <circle cx="32" cy="32" r="32" fill="#10b981" />
+                        <path d="M18 34l10 10 18-22" stroke="#fff" stroke-width="5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
                     <span class="font-semibold text-base tracking-tight">SimplerToDo</span>
                 </a>
             </div>
@@ -716,8 +720,12 @@
     <footer class="footer footer-center p-8 bg-base-200/60 text-base-content/40 text-sm border-t border-base-200">
         <div class="flex flex-wrap gap-4 justify-center items-center">
             <div class="flex items-center gap-2">
-                <img src="/app-icon-64.png" alt="" width="20" height="20" decoding="async"
-                    class="h-5 w-5 rounded-md object-contain shrink-0" aria-hidden="true" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" class="h-5 w-5 shrink-0"
+                    width="20" height="20" aria-hidden="true">
+                    <circle cx="32" cy="32" r="32" fill="#10b981" />
+                    <path d="M18 34l10 10 18-22" stroke="#fff" stroke-width="5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
                 <span class="font-semibold text-base-content/60">SimplerToDo</span>
             </div>
             <span class="hidden md:inline">·</span>
