@@ -146,7 +146,7 @@
     </style>
 </head>
 
-<body class="min-h-screen bg-base-100 text-base-content pb-24 md:pb-6">
+<body class="min-h-screen bg-base-100 text-base-content pb-28 md:pb-6">
 
     <!-- ───────────────── NAVBAR ───────────────── -->
     <div class="sticky top-0 z-50 border-b border-base-200 bg-base-100/80 backdrop-blur-md">
@@ -180,6 +180,23 @@
                             <li><a href="#pricing" class="nav-anchor">Open Source</a></li>
                         </ul>
                         <div class="divider my-1"></div>
+                        <ul class="menu menu-sm w-full p-0">
+                            <li>
+                                <a href="https://help.simplertodo.com/" class="gap-2" target="_blank"
+                                    rel="noopener noreferrer">
+                                    <i data-lucide="circle-help" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
+                                    Help
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://assistant.simplertodo.com/" class="gap-2" target="_blank"
+                                    rel="noopener noreferrer">
+                                    <i data-lucide="bot" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
+                                    AI Assistant
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="divider my-1"></div>
                         <div class="px-3 py-2 flex items-center justify-between gap-3 theme-mode-row"
                             onpointerdown="event.stopPropagation()">
                             <div class="min-w-0">
@@ -204,12 +221,12 @@
             <!-- Left: Copy -->
             <div class="flex-1 text-center lg:text-left">
                 <h1 class="fade-up delay-1 text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
-                    A calmer to‑do list<br />for <span class="text-primary">real life.</span>
+                    A calmer task manager…<br /><span class="text-primary">for the rest of us.</span>
                 </h1>
                 <p class="fade-up delay-2 text-base-content/60 text-lg leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0">
-                    SimplerToDo is a lightning-fast, keyboard-friendly to-do app with five simple sections, smart tags,
-                    and fast reports. Your data stays only on your device, and you can export it anytime to plain text,
-                    rich text, Markdown, or JSON.
+                    SimplerToDo is a simple, lightning-fast, keyboard-friendly to-do app with five simple sections,
+                    smart tags, and fast reports. Your data stays only on your device, and you can export it anytime to
+                    plain text, rich text, Markdown, or JSON.
                 </p>
                 <div class="fade-up delay-3 flex flex-wrap gap-3 justify-center lg:justify-start">
                     <a href="https://app.simplertodo.com/" class="btn btn-primary rounded-lg gap-2">
@@ -770,24 +787,17 @@
         </form>
     </dialog>
 
-    <div class="fixed z-40 right-4 flex flex-col gap-2 bottom-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+    <div class="fixed z-40 right-4 flex flex-col gap-3 bottom-[calc(1rem+env(safe-area-inset-bottom,0px))]">
         <div class="tooltip tooltip-left" data-tip="Help center">
-            <a href="https://help.simplertodo.com/" class="btn btn-circle btn-sm btn-secondary shadow-md"
+            <a href="https://help.simplertodo.com/" class="btn btn-circle btn-md btn-secondary shadow-md"
                 target="_blank" rel="noopener noreferrer" aria-label="Help center at help.simplertodo.com">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
+                <i data-lucide="circle-help" class="w-6 h-6" aria-hidden="true"></i>
             </a>
         </div>
         <div class="tooltip tooltip-left" data-tip="Assistant">
-            <a href="https://assistant.simplertodo.com/" class="btn btn-circle btn-sm btn-primary shadow-md"
+            <a href="https://assistant.simplertodo.com/" class="btn btn-circle btn-md btn-primary shadow-md"
                 target="_blank" rel="noopener noreferrer" aria-label="Open SimplerToDo assistant">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+                <i data-lucide="bot" class="w-6 h-6" aria-hidden="true"></i>
             </a>
         </div>
     </div>
@@ -898,6 +908,23 @@
                 }, 0);
             });
         });
+
+        document.querySelectorAll('#main-nav-dropdown a[target="_blank"]').forEach(function (a) {
+            a.addEventListener('click', function () {
+                setTimeout(function () {
+                    var trig = document.getElementById('main-nav-dropdown-trigger');
+                    if (trig) trig.blur();
+                }, 0);
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script>
+        try {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons({ icons: lucide });
+            }
+        } catch (e) { }
     </script>
 </body>
 
