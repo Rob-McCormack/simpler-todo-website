@@ -155,6 +155,10 @@
                     <li><a href="#compare" class="rounded-lg font-medium">Data Ownership</a></li>
                     <li><a href="#pricing" class="rounded-lg font-medium">Open Source</a></li>
                     <li>
+                        <a href="https://help.simplertodo.com/" class="rounded-lg font-medium" target="_blank"
+                            rel="noopener noreferrer" title="Help center — opens in a new tab">Help</a>
+                    </li>
+                    <li>
                         <a href="https://assistant.simplertodo.com/" class="rounded-lg font-medium" target="_blank"
                             rel="noopener noreferrer" title="Opens in a new tab">Assistant</a>
                     </li>
@@ -197,8 +201,10 @@
                     <option value="nord">Nord</option>
                     <option value="sunset">Sunset</option>
                 </select>
+                <a href="https://help.simplertodo.com/" class="btn btn-secondary btn-sm rounded-lg shrink-0"
+                    target="_blank" rel="noopener noreferrer" title="Guides &amp; docs — help.simplertodo.com">Help center</a>
                 <a href="https://assistant.simplertodo.com/" class="btn btn-outline btn-sm rounded-lg shrink-0"
-                    target="_blank" rel="noopener noreferrer" title="Help &amp; questions — opens in a new tab">Assistant</a>
+                    target="_blank" rel="noopener noreferrer" title="AI chat — opens in a new tab">Assistant</a>
                 <a href="https://app.simplertodo.com/" class="btn btn-primary btn-sm rounded-lg shrink-0">Get Started</a>
             </div>
         </div>
@@ -216,10 +222,16 @@
                 <h1 class="fade-up delay-2 text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
                     A calmer to‑do list<br />for <span class="text-primary">real life.</span>
                 </h1>
-                <p class="fade-up delay-3 text-base-content/60 text-lg leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0">
+                <p class="fade-up delay-3 text-base-content/60 text-lg leading-relaxed mb-4 max-w-lg mx-auto lg:mx-0">
                     SimplerToDo is a lightning-fast, keyboard-friendly to-do app with five simple sections, smart tags,
                     and fast reports. Your data stays only on your device, and you can export it anytime to plain text,
                     rich text, Markdown, or JSON.
+                </p>
+                <p class="fade-up delay-3 text-base font-medium mb-8 max-w-lg mx-auto lg:mx-0">
+                    <a href="https://help.simplertodo.com/" class="link link-primary" target="_blank"
+                        rel="noopener noreferrer">Help center</a>
+                    <span class="text-base-content/50 font-normal text-sm"> — guides, videos, and FAQs at
+                        help.simplertodo.com</span>
                 </p>
                 <div class="fade-up delay-4 flex flex-wrap gap-3 justify-center lg:justify-start">
                     <a href="https://app.simplertodo.com/" class="btn btn-primary rounded-lg gap-2">
@@ -230,6 +242,15 @@
                         Open the app
                     </a>
                     <a href="#features" class="btn btn-ghost rounded-lg border border-base-300">See how it works</a>
+                    <a href="https://help.simplertodo.com/" class="btn btn-secondary rounded-lg gap-2" target="_blank"
+                        rel="noopener noreferrer" title="help.simplertodo.com">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-90" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                        </svg>
+                        Help center
+                    </a>
                     <a href="https://assistant.simplertodo.com/" class="btn btn-ghost rounded-lg border border-base-300 gap-2"
                         target="_blank" rel="noopener noreferrer" title="Opens in a new tab">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none"
@@ -725,6 +746,8 @@
                 onclick="document.getElementById('privacy-dialog').showModal()">Privacy</button>
             <button type="button" class="hover:text-base-content transition-colors"
                 onclick="document.getElementById('terms-dialog').showModal()">Terms</button>
+            <a href="https://help.simplertodo.com/" class="hover:text-base-content transition-colors font-medium"
+                target="_blank" rel="noopener noreferrer">Help center</a>
             <a href="https://assistant.simplertodo.com/" class="hover:text-base-content transition-colors"
                 target="_blank" rel="noopener noreferrer">Assistant</a>
             <a href="mailto:simplertasks@gmail.com" class="hover:text-base-content transition-colors">Contact</a>
@@ -783,16 +806,28 @@
         </form>
     </dialog>
 
-    <a href="https://assistant.simplertodo.com/"
-        class="sm:hidden fixed z-40 left-4 right-4 min-h-[3rem] btn btn-primary shadow-lg rounded-xl gap-2"
-        style="bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));"
-        target="_blank" rel="noopener noreferrer" aria-label="Open SimplerToDo assistant in a new tab">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-        <span class="font-medium">Ask the assistant</span>
-    </a>
+    <div class="sm:hidden fixed z-40 left-4 right-4 flex gap-2"
+        style="bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));">
+        <a href="https://help.simplertodo.com/"
+            class="btn btn-secondary flex-1 min-h-[3rem] shadow-lg rounded-xl gap-2 font-medium"
+            target="_blank" rel="noopener noreferrer" aria-label="Open help center at help.simplertodo.com">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+            Help
+        </a>
+        <a href="https://assistant.simplertodo.com/"
+            class="btn btn-primary flex-1 min-h-[3rem] shadow-lg rounded-xl gap-2 font-medium"
+            target="_blank" rel="noopener noreferrer" aria-label="Open SimplerToDo assistant in a new tab">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            Assistant
+        </a>
+    </div>
 
     <script>
         // ── Theme Picker (theme already applied in head for no flash) ──
