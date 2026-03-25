@@ -5,9 +5,17 @@
     <meta charset="UTF-8" />
     <script>
         (function () {
-            var theme = 'light';
-            try { theme = localStorage.getItem('theme') || 'light'; } catch (e) { }
-            document.documentElement.setAttribute('data-theme', theme);
+            var mode = 'light';
+            try {
+                var cs = localStorage.getItem('colorScheme');
+                if (cs === 'light' || cs === 'dark') {
+                    mode = cs;
+                } else {
+                    var old = localStorage.getItem('theme');
+                    if (old === 'forest' || old === 'dark') mode = 'dark';
+                }
+            } catch (e) { }
+            document.documentElement.setAttribute('data-theme', mode === 'dark' ? 'forest' : 'emerald');
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -150,14 +158,15 @@
                 </a>
             </div>
             <div class="navbar-end gap-2">
-                <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-square" aria-label="Open menu">
+                <div class="dropdown dropdown-end" id="main-nav-dropdown">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-square" aria-label="Open menu"
+                        id="main-nav-dropdown-trigger">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round">
                             <path d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </div>
-                    <div tabindex="0"
+                    <div
                         class="dropdown-content z-[100] mt-3 w-64 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg max-h-[min(24rem,85vh)] overflow-y-auto">
                         <ul class="menu menu-sm w-full p-0">
                             <li><a href="#features" class="nav-anchor">Features</a></li>
@@ -166,43 +175,14 @@
                             <li><a href="#pricing" class="nav-anchor">Open Source</a></li>
                         </ul>
                         <div class="divider my-1"></div>
-                        <p class="px-3 pt-1 text-xs font-semibold uppercase tracking-wide opacity-60">Theme</p>
-                        <div class="px-2 pb-2">
-                            <select id="theme-select" class="select select-bordered select-sm w-full max-w-full"
-                                title="Change theme" onchange="applyTheme(this.value, event)">
-                                <option value="light">Light</option>
-                                <option value="dark">Dark</option>
-                                <option value="cupcake">Cupcake</option>
-                                <option value="bumblebee">Bumblebee</option>
-                                <option value="emerald">Emerald</option>
-                                <option value="corporate">Corporate</option>
-                                <option value="synthwave">Synthwave</option>
-                                <option value="retro">Retro</option>
-                                <option value="cyberpunk">Cyberpunk</option>
-                                <option value="valentine">Valentine</option>
-                                <option value="halloween">Halloween</option>
-                                <option value="garden">Garden</option>
-                                <option value="forest">Forest</option>
-                                <option value="aqua">Aqua</option>
-                                <option value="lofi">Lofi</option>
-                                <option value="pastel">Pastel</option>
-                                <option value="fantasy">Fantasy</option>
-                                <option value="wireframe">Wireframe</option>
-                                <option value="black">Black</option>
-                                <option value="luxury">Luxury</option>
-                                <option value="dracula">Dracula</option>
-                                <option value="cmyk">CMYK</option>
-                                <option value="autumn">Autumn</option>
-                                <option value="business">Business</option>
-                                <option value="acid">Acid</option>
-                                <option value="lemonade">Lemonade</option>
-                                <option value="night">Night</option>
-                                <option value="coffee">Coffee</option>
-                                <option value="winter">Winter</option>
-                                <option value="dim">Dim</option>
-                                <option value="nord">Nord</option>
-                                <option value="sunset">Sunset</option>
-                            </select>
+                        <div class="px-3 py-2 flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium leading-tight">Dark mode</p>
+                                <p class="text-xs opacity-60 leading-tight mt-0.5">Light: Emerald · Dark: Forest</p>
+                            </div>
+                            <input type="checkbox" class="toggle toggle-sm toggle-primary shrink-0"
+                                id="theme-mode-toggle" title="Toggle dark mode (Forest theme)"
+                                aria-label="Toggle dark mode" />
                         </div>
                     </div>
                 </div>
@@ -216,18 +196,15 @@
 
             <!-- Left: Copy -->
             <div class="flex-1 text-center lg:text-left">
-                <div class="fade-up delay-1">
-                    <span class="badge badge-primary badge-outline text-xs mb-5">Free, open source, local-only task manager</span>
-                </div>
-                <h1 class="fade-up delay-2 text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
+                <h1 class="fade-up delay-1 text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
                     A calmer to‑do list<br />for <span class="text-primary">real life.</span>
                 </h1>
-                <p class="fade-up delay-3 text-base-content/60 text-lg leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0">
+                <p class="fade-up delay-2 text-base-content/60 text-lg leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0">
                     SimplerToDo is a lightning-fast, keyboard-friendly to-do app with five simple sections, smart tags,
                     and fast reports. Your data stays only on your device, and you can export it anytime to plain text,
                     rich text, Markdown, or JSON.
                 </p>
-                <div class="fade-up delay-4 flex flex-wrap gap-3 justify-center lg:justify-start">
+                <div class="fade-up delay-3 flex flex-wrap gap-3 justify-center lg:justify-start">
                     <a href="https://app.simplertodo.com/" class="btn btn-primary rounded-lg gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -237,7 +214,7 @@
                     </a>
                     <a href="#features" class="btn btn-ghost rounded-lg border border-base-300 nav-anchor">See how it works</a>
                 </div>
-                <p class="fade-up delay-5 text-xs text-base-content/40 mt-4">
+                <p class="fade-up delay-4 text-xs text-base-content/40 mt-4">
                     No account. No server. No lock-in. You own your data.
                 </p>
             </div>
@@ -809,24 +786,40 @@
     </div>
 
     <script>
-        // ── Theme Picker (theme already applied in head for no flash) ──
-        function applyTheme(t, ev) {
-            if (ev) {
-                ev.preventDefault();
-                ev.stopPropagation();
-            }
-            if (!t) return;
-            document.documentElement.setAttribute('data-theme', t);
-            var sel = document.getElementById('theme-select');
-            if (sel) sel.value = t;
-            try { localStorage.setItem('theme', t); } catch (e) { }
+        // ── Light (Emerald) / Dark (Forest); preference in localStorage colorScheme ──
+        var THEME_LIGHT = 'emerald';
+        var THEME_DARK = 'forest';
+
+        function getColorScheme() {
+            try {
+                var cs = localStorage.getItem('colorScheme');
+                if (cs === 'light' || cs === 'dark') return cs;
+                var old = localStorage.getItem('theme');
+                if (old === 'forest' || old === 'dark') return 'dark';
+            } catch (e) { }
+            return 'light';
         }
+
+        function applyColorScheme(mode) {
+            if (mode !== 'light' && mode !== 'dark') mode = 'light';
+            var daisy = mode === 'dark' ? THEME_DARK : THEME_LIGHT;
+            document.documentElement.setAttribute('data-theme', daisy);
+            try {
+                localStorage.setItem('colorScheme', mode);
+                localStorage.removeItem('theme');
+            } catch (e) { }
+            var t = document.getElementById('theme-mode-toggle');
+            if (t) t.checked = mode === 'dark';
+        }
+
         (function () {
-            var saved = 'light';
-            try { saved = localStorage.getItem('theme') || 'light'; } catch (e) { }
-            document.documentElement.setAttribute('data-theme', saved);
-            var sel = document.getElementById('theme-select');
-            if (sel) sel.value = saved;
+            applyColorScheme(getColorScheme());
+            var t = document.getElementById('theme-mode-toggle');
+            if (t) {
+                t.addEventListener('change', function () {
+                    applyColorScheme(t.checked ? 'dark' : 'light');
+                });
+            }
         })();
     </script>
     <script>
@@ -869,6 +862,26 @@
                 }
             });
         });
+
+        // DaisyUI dropdown stays open while .dropdown has :focus-within; clicks on non-focusable
+        // parts of the page often don't move focus, so close explicitly on outside click / Escape.
+        (function () {
+            var dd = document.getElementById('main-nav-dropdown');
+            if (!dd) return;
+            function closeNavDropdown() {
+                var ae = document.activeElement;
+                if (ae && dd.contains(ae)) ae.blur();
+                var trig = document.getElementById('main-nav-dropdown-trigger');
+                if (trig) trig.blur();
+            }
+            document.addEventListener('pointerdown', function (e) {
+                if (dd.contains(e.target)) return;
+                closeNavDropdown();
+            }, true);
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeNavDropdown();
+            });
+        })();
 
         // Close hamburger dropdown after in-page navigation (DaisyUI dropdown uses focus)
         document.querySelectorAll('.nav-anchor').forEach(function (a) {
