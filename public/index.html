@@ -13,7 +13,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SimplerToDo — Free, Open Source, Local-Only To-Do App</title>
     <meta name="description" content="Free and open source to-do app. Your data stays only on your device. Export anytime to plain text, rich text, Markdown, or JSON." />
-    <!-- Favicon -->
+    <!-- Favicon (PNG must live at public/app-icon-64.png for deploy) -->
+    <link rel="icon" type="image/png" sizes="64x64" href="/app-icon-64.png" />
+    <link rel="apple-touch-icon" href="/app-icon-64.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <!-- Open Graph (Facebook, LinkedIn, etc.) -->
@@ -138,13 +140,8 @@
         <div class="navbar min-h-14 px-2">
             <div class="navbar-start">
                 <a href="/" class="flex items-center gap-2 ml-1">
-                    <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary-content" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                            stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                    </div>
+                    <img src="/app-icon-64.png" alt="" width="32" height="32" decoding="async"
+                        class="h-8 w-8 rounded-lg object-contain shrink-0" />
                     <span class="font-semibold text-base tracking-tight">SimplerToDo</span>
                 </a>
             </div>
@@ -719,13 +716,8 @@
     <footer class="footer footer-center p-8 bg-base-200/60 text-base-content/40 text-sm border-t border-base-200">
         <div class="flex flex-wrap gap-4 justify-center items-center">
             <div class="flex items-center gap-2">
-                <div class="w-5 h-5 rounded-md bg-primary flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-primary-content" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                </div>
+                <img src="/app-icon-64.png" alt="" width="20" height="20" decoding="async"
+                    class="h-5 w-5 rounded-md object-contain shrink-0" aria-hidden="true" />
                 <span class="font-semibold text-base-content/60">SimplerToDo</span>
             </div>
             <span class="hidden md:inline">·</span>
