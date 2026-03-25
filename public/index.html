@@ -184,29 +184,44 @@
                             <li>
                                 <a href="https://help.simplertodo.com/" class="gap-2" target="_blank"
                                     rel="noopener noreferrer">
-                                    <i data-lucide="circle-help" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" width="16"
+                                        height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        aria-hidden="true">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                        <path d="M12 17h.01" />
+                                    </svg>
                                     Help
                                 </a>
                             </li>
                             <li>
                                 <a href="https://assistant.simplertodo.com/" class="gap-2" target="_blank"
                                     rel="noopener noreferrer">
-                                    <i data-lucide="bot" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" width="16"
+                                        height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        aria-hidden="true">
+                                        <path d="M12 8V4H8" />
+                                        <rect width="16" height="12" x="4" y="8" rx="2" />
+                                        <path d="M2 14h2" />
+                                        <path d="M20 14h2" />
+                                        <path d="M15 13v2" />
+                                        <path d="M9 13v2" />
+                                    </svg>
                                     AI Assistant
                                 </a>
                             </li>
                         </ul>
                         <div class="divider my-1"></div>
-                        <div class="px-3 py-2 flex items-center justify-between gap-3 theme-mode-row"
-                            onpointerdown="event.stopPropagation()">
+                        <div class="px-3 py-2 flex items-center justify-between gap-3 theme-mode-row">
                             <div class="min-w-0">
                                 <p class="text-sm font-medium leading-tight">Dark mode</p>
                                 <p class="text-xs opacity-60 leading-tight mt-0.5">Light: Emerald · Dark: Forest</p>
                             </div>
                             <input type="checkbox" class="toggle toggle-sm toggle-primary shrink-0"
                                 id="theme-mode-toggle" title="Toggle dark mode (Forest theme)"
-                                aria-label="Toggle dark mode"
-                                onchange="applyColorScheme(this.checked ? 'dark' : 'light')" />
+                                aria-label="Toggle dark mode" />
                         </div>
                     </div>
                 </div>
@@ -791,140 +806,168 @@
         <div class="tooltip tooltip-left" data-tip="Help center">
             <a href="https://help.simplertodo.com/" class="btn btn-circle btn-md btn-secondary shadow-md"
                 target="_blank" rel="noopener noreferrer" aria-label="Help center at help.simplertodo.com">
-                <i data-lucide="circle-help" class="w-6 h-6" aria-hidden="true"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" width="24" height="24" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                </svg>
             </a>
         </div>
         <div class="tooltip tooltip-left" data-tip="Assistant">
             <a href="https://assistant.simplertodo.com/" class="btn btn-circle btn-md btn-primary shadow-md"
                 target="_blank" rel="noopener noreferrer" aria-label="Open SimplerToDo assistant">
-                <i data-lucide="bot" class="w-6 h-6" aria-hidden="true"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" width="24" height="24" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">
+                    <path d="M12 8V4H8" />
+                    <rect width="16" height="12" x="4" y="8" rx="2" />
+                    <path d="M2 14h2" />
+                    <path d="M20 14h2" />
+                    <path d="M15 13v2" />
+                    <path d="M9 13v2" />
+                </svg>
             </a>
         </div>
     </div>
 
     <script>
-        // ── Light (Emerald) / Dark (Forest); namespaced key avoids clashes with old theme keys ──
-        var THEME_LIGHT = 'emerald';
-        var THEME_DARK = 'forest';
-        var COLOR_MODE_KEY = 'simplertodo.colorMode';
-
-        function getColorScheme() {
-            try {
-                var v = localStorage.getItem(COLOR_MODE_KEY);
-                if (v === 'light' || v === 'dark') return v;
-                var cs = localStorage.getItem('colorScheme');
-                if (cs === 'light' || cs === 'dark') return cs;
-                var old = localStorage.getItem('theme');
-                if (old === 'forest' || old === 'dark') return 'dark';
-            } catch (e) { }
-            return 'light';
-        }
-
-        function applyColorScheme(mode) {
-            if (mode !== 'light' && mode !== 'dark') mode = 'light';
-            var daisy = mode === 'dark' ? THEME_DARK : THEME_LIGHT;
-            document.documentElement.setAttribute('data-theme', daisy);
-            try {
-                localStorage.setItem(COLOR_MODE_KEY, mode);
-                localStorage.removeItem('colorScheme');
-                localStorage.removeItem('theme');
-            } catch (e) { }
-            var t = document.getElementById('theme-mode-toggle');
-            if (t) t.checked = mode === 'dark';
-        }
-
         (function () {
-            applyColorScheme(getColorScheme());
-        })();
-    </script>
-    <script>
-        // ── Interactive Task Demo ──
-        function toggleTask(el) {
-            const checkbox = el.querySelector('input[type="checkbox"]');
-            const taskSpan = el.querySelector('span');
-            checkbox.checked = !checkbox.checked;
-            taskSpan.classList.toggle('task-done', checkbox.checked);
-        }
+            var THEME_LIGHT = 'emerald';
+            var THEME_DARK = 'forest';
+            var COLOR_MODE_KEY = 'simplertodo.colorMode';
 
-        function addTask(e) {
-            if (e.key === 'Enter') addTaskBtn();
-        }
+            function getColorScheme() {
+                try {
+                    var v = localStorage.getItem(COLOR_MODE_KEY);
+                    if (v === 'light' || v === 'dark') return v;
+                    var cs = localStorage.getItem('colorScheme');
+                    if (cs === 'light' || cs === 'dark') return cs;
+                    var old = localStorage.getItem('theme');
+                    if (old === 'forest' || old === 'dark') return 'dark';
+                } catch (e) { }
+                return 'light';
+            }
 
-        function addTaskBtn() {
-            const input = document.getElementById('new-task-input');
-            const text = input.value.trim();
-            if (!text) return;
+            function applyColorScheme(mode) {
+                if (mode !== 'light' && mode !== 'dark') mode = 'light';
+                var daisy = mode === 'dark' ? THEME_DARK : THEME_LIGHT;
+                document.documentElement.setAttribute('data-theme', daisy);
+                try {
+                    localStorage.setItem(COLOR_MODE_KEY, mode);
+                    localStorage.removeItem('colorScheme');
+                    localStorage.removeItem('theme');
+                } catch (e) { }
+                var tgl = document.getElementById('theme-mode-toggle');
+                if (tgl) tgl.checked = mode === 'dark';
+            }
+            window.applyColorScheme = applyColorScheme;
 
-            const list = document.getElementById('task-list');
-            const div = document.createElement('div');
-            div.className = 'task-item flex items-center gap-3 p-2.5 rounded-lg bg-base-200/50 cursor-pointer check-animate';
-            div.onclick = function () { toggleTask(this); };
-            div.innerHTML = `
-        <input type="checkbox" class="checkbox checkbox-primary checkbox-sm" onclick="event.stopPropagation(); toggleTask(this.parentElement)" />
-        <span class="text-sm">${text.replace(/</g, '&lt;')}</span>
-      `;
-            list.appendChild(div);
-            input.value = '';
-        }
-
-        // ── Smooth scroll ──
-        document.querySelectorAll('a[href^="#"]').forEach(a => {
-            a.addEventListener('click', e => {
-                const target = document.querySelector(a.getAttribute('href'));
-                if (target) {
-                    e.preventDefault();
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
-
-        // DaisyUI dropdown stays open while .dropdown has :focus-within; clicks on non-focusable
-        // parts of the page often don't move focus, so close explicitly on outside click / Escape.
-        (function () {
-            var dd = document.getElementById('main-nav-dropdown');
-            if (!dd) return;
             function closeNavDropdown() {
+                var dd = document.getElementById('main-nav-dropdown');
                 var ae = document.activeElement;
-                if (ae && dd.contains(ae)) ae.blur();
+                if (ae && dd && dd.contains(ae)) ae.blur();
                 var trig = document.getElementById('main-nav-dropdown-trigger');
                 if (trig) trig.blur();
             }
-            document.addEventListener('pointerdown', function (e) {
-                if (dd.contains(e.target)) return;
-                closeNavDropdown();
-            }, true);
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') closeNavDropdown();
-            });
-        })();
 
-        // Close hamburger dropdown after in-page navigation (DaisyUI dropdown uses focus)
-        document.querySelectorAll('.nav-anchor').forEach(function (a) {
-            a.addEventListener('click', function () {
-                setTimeout(function () {
-                    if (document.activeElement && document.activeElement.closest('.dropdown')) {
-                        document.activeElement.blur();
-                    }
-                }, 0);
-            });
-        });
+            window.toggleTask = function (el) {
+                var checkbox = el.querySelector('input[type="checkbox"]');
+                var taskSpan = el.querySelector('span');
+                checkbox.checked = !checkbox.checked;
+                taskSpan.classList.toggle('task-done', checkbox.checked);
+            };
 
-        document.querySelectorAll('#main-nav-dropdown a[target="_blank"]').forEach(function (a) {
-            a.addEventListener('click', function () {
-                setTimeout(function () {
-                    var trig = document.getElementById('main-nav-dropdown-trigger');
-                    if (trig) trig.blur();
-                }, 0);
-            });
-        });
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-    <script>
-        try {
-            if (typeof lucide !== 'undefined' && lucide.createIcons) {
-                lucide.createIcons({ icons: lucide });
+            window.addTask = function (e) {
+                if (e.key === 'Enter') window.addTaskBtn();
+            };
+
+            window.addTaskBtn = function () {
+                var input = document.getElementById('new-task-input');
+                var text = input.value.trim();
+                if (!text) return;
+
+                var list = document.getElementById('task-list');
+                var div = document.createElement('div');
+                div.className = 'task-item flex items-center gap-3 p-2.5 rounded-lg bg-base-200/50 cursor-pointer check-animate';
+                div.onclick = function () { window.toggleTask(this); };
+                div.innerHTML =
+                    '<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" onclick="event.stopPropagation(); toggleTask(this.parentElement)" />' +
+                    '<span class="text-sm">' + text.replace(/</g, '&lt;') + '</span>';
+                list.appendChild(div);
+                input.value = '';
+            };
+
+            function initPageScripts() {
+                applyColorScheme(getColorScheme());
+
+                var themeToggle = document.getElementById('theme-mode-toggle');
+                if (themeToggle) {
+                    themeToggle.addEventListener('change', function () {
+                        applyColorScheme(themeToggle.checked ? 'dark' : 'light');
+                    });
+                }
+
+                var themeRow = document.querySelector('.theme-mode-row');
+                if (themeRow) {
+                    themeRow.addEventListener('pointerdown', function (e) {
+                        e.stopPropagation();
+                    });
+                }
+
+                document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+                    a.addEventListener('click', function (e) {
+                        var href = a.getAttribute('href');
+                        if (!href || href === '#' || href.length < 2) return;
+                        try {
+                            var target = document.querySelector(href);
+                            if (target) {
+                                e.preventDefault();
+                                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        } catch (err) { }
+                    });
+                });
+
+                document.addEventListener('pointerdown', function (e) {
+                    var el = e.target;
+                    if (el.nodeType === 3) el = el.parentElement;
+                    if (!el || typeof el.closest !== 'function') return;
+                    if (el.closest('#main-nav-dropdown')) return;
+                    closeNavDropdown();
+                }, true);
+
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') closeNavDropdown();
+                });
+
+                document.querySelectorAll('.nav-anchor').forEach(function (a) {
+                    a.addEventListener('click', function () {
+                        setTimeout(function () {
+                            if (document.activeElement && document.activeElement.closest('.dropdown')) {
+                                document.activeElement.blur();
+                            }
+                        }, 0);
+                    });
+                });
+
+                document.querySelectorAll('#main-nav-dropdown a[target="_blank"]').forEach(function (a) {
+                    a.addEventListener('click', function () {
+                        setTimeout(function () {
+                            var trig = document.getElementById('main-nav-dropdown-trigger');
+                            if (trig) trig.blur();
+                        }, 0);
+                    });
+                });
             }
-        } catch (e) { }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initPageScripts);
+            } else {
+                initPageScripts();
+            }
+        })();
     </script>
 </body>
 
