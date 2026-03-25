@@ -143,14 +143,22 @@
             text-transform: uppercase;
             font-weight: 600;
         }
+
+        #main-nav-menu>summary {
+            list-style: none;
+        }
+
+        #main-nav-menu>summary::-webkit-details-marker {
+            display: none;
+        }
     </style>
 </head>
 
 <body class="min-h-screen bg-base-100 text-base-content pb-28 md:pb-6">
 
     <!-- ───────────────── NAVBAR ───────────────── -->
-    <div class="sticky top-0 z-50 border-b border-base-200 bg-base-100/80 backdrop-blur-md">
-        <div class="navbar min-h-14 px-2">
+    <div class="sticky top-0 z-50 border-b border-base-200 bg-base-100/80 backdrop-blur-md overflow-visible">
+        <div class="navbar min-h-14 px-2 overflow-visible">
             <div class="navbar-start">
                 <a href="/" class="flex items-center gap-2 ml-1">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" class="h-8 w-8 shrink-0"
@@ -162,17 +170,16 @@
                     <span class="font-semibold text-base tracking-tight">SimplerToDo</span>
                 </a>
             </div>
-            <div class="navbar-end gap-2">
-                <div class="dropdown dropdown-end" id="main-nav-dropdown">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-square" aria-label="Open menu"
-                        id="main-nav-dropdown-trigger">
+            <div class="navbar-end gap-2 overflow-visible">
+                <details id="main-nav-menu" class="relative overflow-visible">
+                    <summary class="btn btn-ghost btn-square cursor-pointer" aria-label="Open menu">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round">
                             <path d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
-                    </div>
+                    </summary>
                     <div
-                        class="dropdown-content z-[100] mt-3 w-64 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg max-h-[min(24rem,85vh)] overflow-y-auto">
+                        class="absolute right-0 top-full z-[100] mt-2 w-64 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg max-h-[min(24rem,85vh)] overflow-y-auto">
                         <ul class="menu menu-sm w-full p-0">
                             <li><a href="#features" class="nav-anchor">Features</a></li>
                             <li><a href="#screenshots" class="nav-anchor">Screenshots</a></li>
@@ -224,7 +231,7 @@
                                 aria-label="Toggle dark mode" />
                         </div>
                     </div>
-                </div>
+                </details>
             </div>
         </div>
     </div>
@@ -864,12 +871,9 @@
             }
             window.applyColorScheme = applyColorScheme;
 
-            function closeNavDropdown() {
-                var dd = document.getElementById('main-nav-dropdown');
-                var ae = document.activeElement;
-                if (ae && dd && dd.contains(ae)) ae.blur();
-                var trig = document.getElementById('main-nav-dropdown-trigger');
-                if (trig) trig.blur();
+            function closeNavMenu() {
+                var menu = document.getElementById('main-nav-menu');
+                if (menu) menu.open = false;
             }
 
             window.toggleTask = function (el) {
@@ -909,13 +913,6 @@
                     });
                 }
 
-                var themeRow = document.querySelector('.theme-mode-row');
-                if (themeRow) {
-                    themeRow.addEventListener('pointerdown', function (e) {
-                        e.stopPropagation();
-                    });
-                }
-
                 document.querySelectorAll('a[href^="#"]').forEach(function (a) {
                     a.addEventListener('click', function (e) {
                         var href = a.getAttribute('href');
@@ -924,41 +921,24 @@
                             var target = document.querySelector(href);
                             if (target) {
                                 e.preventDefault();
+                                if (a.closest('#main-nav-menu')) closeNavMenu();
                                 target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }
                         } catch (err) { }
                     });
                 });
 
-                document.addEventListener('pointerdown', function (e) {
-                    var el = e.target;
-                    if (el.nodeType === 3) el = el.parentElement;
-                    if (!el || typeof el.closest !== 'function') return;
-                    if (el.closest('#main-nav-dropdown')) return;
-                    closeNavDropdown();
-                }, true);
+                document.querySelectorAll('#main-nav-menu a[target="_blank"]').forEach(function (a) {
+                    a.addEventListener('click', function () {
+                        closeNavMenu();
+                    });
+                });
+
+                /* No document-level "click outside" close: on iOS (Safari + Chrome) that click often
+                   races with <details> opening and collapses the menu immediately. */
 
                 document.addEventListener('keydown', function (e) {
-                    if (e.key === 'Escape') closeNavDropdown();
-                });
-
-                document.querySelectorAll('.nav-anchor').forEach(function (a) {
-                    a.addEventListener('click', function () {
-                        setTimeout(function () {
-                            if (document.activeElement && document.activeElement.closest('.dropdown')) {
-                                document.activeElement.blur();
-                            }
-                        }, 0);
-                    });
-                });
-
-                document.querySelectorAll('#main-nav-dropdown a[target="_blank"]').forEach(function (a) {
-                    a.addEventListener('click', function () {
-                        setTimeout(function () {
-                            var trig = document.getElementById('main-nav-dropdown-trigger');
-                            if (trig) trig.blur();
-                        }, 0);
-                    });
+                    if (e.key === 'Escape') closeNavMenu();
                 });
             }
 
