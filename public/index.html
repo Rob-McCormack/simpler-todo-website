@@ -259,30 +259,99 @@
                 </p>
             </div>
 
-            <!-- More shots: add screen2.png beside screen1 in public/, then duplicate a mockup-phone block below. -->
+            <!-- iPhone grid: same asset for now (screen1.png); set src to screen2.png … screen6.png when you have files. -->
             <div class="mb-12">
                 <h3 class="text-lg font-semibold tracking-tight mb-4 text-center md:text-left">On iPhone</h3>
-                <p class="text-sm text-base-content/60 mb-4 max-w-2xl mx-auto md:mx-0 text-center md:text-left">
-                    Real captures from the phone. When you add more, they appear in this row — swipe sideways on mobile.
+                <p class="text-sm text-base-content/60 mb-8 max-w-2xl mx-auto md:mx-0 text-center md:text-left">
+                    Six views of the app on your phone — same frame size so the grid stays tidy. Swap in
+                    <span class="whitespace-nowrap">screen2.png</span>–<span class="whitespace-nowrap">screen6.png</span>
+                    per tile when your captures are ready.
                 </p>
-                <div
-                    class="flex gap-6 md:gap-8 overflow-x-auto snap-x snap-mandatory pb-2 scroll-px-6 -mx-6 px-6 md:mx-0 md:px-0 md:scroll-px-0 [scrollbar-width:thin] items-start">
-                    <div class="mockup-phone border-base-300 snap-center shrink-0 w-[min(260px,78vw)] max-w-none">
-                        <div class="mockup-phone-camera"></div>
-                        <div class="mockup-phone-display bg-base-100">
-                            <img src="screen1.png" alt="SimplerToDo — iPhone screenshot"
-                                class="w-full h-auto max-h-[480px] object-cover object-top block" width="390"
-                                height="844" loading="lazy" decoding="async" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 justify-items-center">
+                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                        <div class="mockup-phone border-base-300 w-full">
+                            <div class="mockup-phone-camera"></div>
+                            <div class="mockup-phone-display bg-base-100">
+                                <img src="screen1.png" alt="SimplerToDo on iPhone — Today"
+                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    height="844" loading="lazy" decoding="async" />
+                            </div>
                         </div>
-                    </div>
-                    <!--
-                    <div class="mockup-phone border-base-300 snap-center shrink-0 w-[min(260px,78vw)] max-w-none">
-                        <div class="mockup-phone-camera"></div>
-                        <div class="mockup-phone-display bg-base-100">
-                            <img src="screen2.png" alt="…" class="w-full h-auto max-h-[480px] object-cover object-top block" width="390" height="844" loading="lazy" decoding="async" />
+                        <figcaption class="text-center px-1">
+                            <p class="text-sm font-semibold">Today</p>
+                            <p class="text-xs text-base-content/60 mt-0.5">Your day in one calm list.</p>
+                        </figcaption>
+                    </figure>
+                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                        <div class="mockup-phone border-base-300 w-full">
+                            <div class="mockup-phone-camera"></div>
+                            <div class="mockup-phone-display bg-base-100">
+                                <img src="screen1.png" alt="SimplerToDo on iPhone — This week"
+                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    height="844" loading="lazy" decoding="async" />
+                            </div>
                         </div>
-                    </div>
-                    -->
+                        <figcaption class="text-center px-1">
+                            <p class="text-sm font-semibold">This week</p>
+                            <p class="text-xs text-base-content/60 mt-0.5">Plan ahead without the clutter.</p>
+                        </figcaption>
+                    </figure>
+                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                        <div class="mockup-phone border-base-300 w-full">
+                            <div class="mockup-phone-camera"></div>
+                            <div class="mockup-phone-display bg-base-100">
+                                <img src="screen1.png" alt="SimplerToDo on iPhone — Tags"
+                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    height="844" loading="lazy" decoding="async" />
+                            </div>
+                        </div>
+                        <figcaption class="text-center px-1">
+                            <p class="text-sm font-semibold">Tags</p>
+                            <p class="text-xs text-base-content/60 mt-0.5">Slice tasks the way you think.</p>
+                        </figcaption>
+                    </figure>
+                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                        <div class="mockup-phone border-base-300 w-full">
+                            <div class="mockup-phone-camera"></div>
+                            <div class="mockup-phone-display bg-base-100">
+                                <img src="screen1.png" alt="SimplerToDo on iPhone — Reports"
+                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    height="844" loading="lazy" decoding="async" />
+                            </div>
+                        </div>
+                        <figcaption class="text-center px-1">
+                            <p class="text-sm font-semibold">Reports</p>
+                            <p class="text-xs text-base-content/60 mt-0.5">Quick summaries, no spreadsheet.</p>
+                        </figcaption>
+                    </figure>
+                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                        <div class="mockup-phone border-base-300 w-full">
+                            <div class="mockup-phone-camera"></div>
+                            <div class="mockup-phone-display bg-base-100">
+                                <img src="screen1.png" alt="SimplerToDo on iPhone — Search"
+                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    height="844" loading="lazy" decoding="async" />
+                            </div>
+                        </div>
+                        <figcaption class="text-center px-1">
+                            <p class="text-sm font-semibold">Search</p>
+                            <p class="text-xs text-base-content/60 mt-0.5">Jump to any task in a keystroke.</p>
+                        </figcaption>
+                    </figure>
+                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                        <div class="mockup-phone border-base-300 w-full">
+                            <div class="mockup-phone-camera"></div>
+                            <div class="mockup-phone-display bg-base-100">
+                                <img src="screen1.png" alt="SimplerToDo on iPhone — Settings"
+                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    height="844" loading="lazy" decoding="async" />
+                            </div>
+                        </div>
+                        <figcaption class="text-center px-1">
+                            <p class="text-sm font-semibold">Settings &amp; export</p>
+                            <p class="text-xs text-base-content/60 mt-0.5">Themes, data, and peace of mind.</p>
+                        </figcaption>
+                    </figure>
                 </div>
             </div>
 
