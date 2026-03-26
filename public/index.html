@@ -263,99 +263,125 @@
                 </p>
             </div>
 
-            <!-- iPhone grid: same asset for now (screen1.png); set src to screen2.png … screen6.png when you have files. -->
+            <!-- iPhone: DaisyUI carousel + anchor indicators (same asset for now; set src to screen2.png … per slide when ready). -->
             <div class="mb-12">
                 <h3 class="text-lg font-semibold tracking-tight mb-4 text-center md:text-left">On iPhone</h3>
-                <p class="text-sm text-base-content/60 mb-8 max-w-2xl mx-auto md:mx-0 text-center md:text-left">
-                    Six views of the app on your phone — same frame size so the grid stays tidy. Swap in
-                    <span class="whitespace-nowrap">screen2.png</span>–<span class="whitespace-nowrap">screen6.png</span>
-                    per tile when your captures are ready.
+                <p class="text-sm text-base-content/60 mb-6 max-w-2xl mx-auto md:mx-0 text-center md:text-left">
+                    Swipe horizontally or tap a dot to move between six views — same phone frame and screenshot height as the hero above.
+                    Swap in <span class="whitespace-nowrap">screen2.png</span>–<span class="whitespace-nowrap">screen6.png</span>
+                    per slide when your captures are ready.
                 </p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 justify-items-center">
-                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                <!-- Flex wrapper: centers the max-width strip on desktop (Daisy carousel display can ignore mx-auto alone). -->
+                <div class="flex w-full justify-center">
+                    <div class="w-full max-w-xl min-w-0">
+                <div
+                    class="carousel carousel-center rounded-box bg-base-200/30 w-full p-4 sm:p-6 space-x-6">
+                    <figure id="iphone-cap-1" tabindex="-1"
+                        class="carousel-item flex flex-col items-center gap-3 w-full max-w-[min(280px,88vw)] scroll-mt-24">
                         <div class="mockup-phone border-base-300 w-full">
                             <div class="mockup-phone-camera"></div>
                             <div class="mockup-phone-display bg-base-100">
                                 <img src="screen1.png" alt="SimplerToDo on iPhone — Today"
-                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    class="w-full h-auto max-h-[min(520px,70vh)] object-cover object-top block" width="390"
                                     height="844" loading="lazy" decoding="async" />
                             </div>
                         </div>
-                        <figcaption class="text-center px-1">
+                        <figcaption class="text-center px-1 min-h-[3rem]">
                             <p class="text-sm font-semibold">Today</p>
                             <p class="text-xs text-base-content/60 mt-0.5">Your day in one calm list.</p>
                         </figcaption>
                     </figure>
-                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                    <figure id="iphone-cap-2" tabindex="-1"
+                        class="carousel-item flex flex-col items-center gap-3 w-full max-w-[min(280px,88vw)] scroll-mt-24">
                         <div class="mockup-phone border-base-300 w-full">
                             <div class="mockup-phone-camera"></div>
                             <div class="mockup-phone-display bg-base-100">
                                 <img src="screen1.png" alt="SimplerToDo on iPhone — This week"
-                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    class="w-full h-auto max-h-[min(520px,70vh)] object-cover object-top block" width="390"
                                     height="844" loading="lazy" decoding="async" />
                             </div>
                         </div>
-                        <figcaption class="text-center px-1">
+                        <figcaption class="text-center px-1 min-h-[3rem]">
                             <p class="text-sm font-semibold">This week</p>
                             <p class="text-xs text-base-content/60 mt-0.5">Plan ahead without the clutter.</p>
                         </figcaption>
                     </figure>
-                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                    <figure id="iphone-cap-3" tabindex="-1"
+                        class="carousel-item flex flex-col items-center gap-3 w-full max-w-[min(280px,88vw)] scroll-mt-24">
                         <div class="mockup-phone border-base-300 w-full">
                             <div class="mockup-phone-camera"></div>
                             <div class="mockup-phone-display bg-base-100">
                                 <img src="screen1.png" alt="SimplerToDo on iPhone — Tags"
-                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    class="w-full h-auto max-h-[min(520px,70vh)] object-cover object-top block" width="390"
                                     height="844" loading="lazy" decoding="async" />
                             </div>
                         </div>
-                        <figcaption class="text-center px-1">
+                        <figcaption class="text-center px-1 min-h-[3rem]">
                             <p class="text-sm font-semibold">Tags</p>
                             <p class="text-xs text-base-content/60 mt-0.5">Slice tasks the way you think.</p>
                         </figcaption>
                     </figure>
-                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                    <figure id="iphone-cap-4" tabindex="-1"
+                        class="carousel-item flex flex-col items-center gap-3 w-full max-w-[min(280px,88vw)] scroll-mt-24">
                         <div class="mockup-phone border-base-300 w-full">
                             <div class="mockup-phone-camera"></div>
                             <div class="mockup-phone-display bg-base-100">
                                 <img src="screen1.png" alt="SimplerToDo on iPhone — Reports"
-                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    class="w-full h-auto max-h-[min(520px,70vh)] object-cover object-top block" width="390"
                                     height="844" loading="lazy" decoding="async" />
                             </div>
                         </div>
-                        <figcaption class="text-center px-1">
+                        <figcaption class="text-center px-1 min-h-[3rem]">
                             <p class="text-sm font-semibold">Reports</p>
                             <p class="text-xs text-base-content/60 mt-0.5">Quick summaries, no spreadsheet.</p>
                         </figcaption>
                     </figure>
-                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                    <figure id="iphone-cap-5" tabindex="-1"
+                        class="carousel-item flex flex-col items-center gap-3 w-full max-w-[min(280px,88vw)] scroll-mt-24">
                         <div class="mockup-phone border-base-300 w-full">
                             <div class="mockup-phone-camera"></div>
                             <div class="mockup-phone-display bg-base-100">
                                 <img src="screen1.png" alt="SimplerToDo on iPhone — Search"
-                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    class="w-full h-auto max-h-[min(520px,70vh)] object-cover object-top block" width="390"
                                     height="844" loading="lazy" decoding="async" />
                             </div>
                         </div>
-                        <figcaption class="text-center px-1">
+                        <figcaption class="text-center px-1 min-h-[3rem]">
                             <p class="text-sm font-semibold">Search</p>
                             <p class="text-xs text-base-content/60 mt-0.5">Jump to any task in a keystroke.</p>
                         </figcaption>
                     </figure>
-                    <figure class="flex flex-col items-center gap-3 w-full max-w-[240px]">
+                    <figure id="iphone-cap-6" tabindex="-1"
+                        class="carousel-item flex flex-col items-center gap-3 w-full max-w-[min(280px,88vw)] scroll-mt-24">
                         <div class="mockup-phone border-base-300 w-full">
                             <div class="mockup-phone-camera"></div>
                             <div class="mockup-phone-display bg-base-100">
                                 <img src="screen1.png" alt="SimplerToDo on iPhone — Settings"
-                                    class="w-full h-[360px] object-cover object-top block sm:h-[380px]" width="390"
+                                    class="w-full h-auto max-h-[min(520px,70vh)] object-cover object-top block" width="390"
                                     height="844" loading="lazy" decoding="async" />
                             </div>
                         </div>
-                        <figcaption class="text-center px-1">
+                        <figcaption class="text-center px-1 min-h-[3rem]">
                             <p class="text-sm font-semibold">Settings &amp; export</p>
                             <p class="text-xs text-base-content/60 mt-0.5">Themes, data, and peace of mind.</p>
                         </figcaption>
                     </figure>
+                </div>
+                <div class="flex w-full justify-center gap-1 sm:gap-2 py-4 flex-wrap" role="group" aria-label="iPhone screenshot slides">
+                    <a href="#iphone-cap-1" class="btn btn-circle btn-ghost border-0 min-h-11 min-w-11 h-11 w-11 p-0 shadow-none hover:bg-base-content/10"
+                        aria-label="Slide 1: Today"><span class="rounded-full bg-base-content/40 h-2.5 w-2.5 shrink-0" aria-hidden="true"></span><span class="sr-only">Today</span></a>
+                    <a href="#iphone-cap-2" class="btn btn-circle btn-ghost border-0 min-h-11 min-w-11 h-11 w-11 p-0 shadow-none hover:bg-base-content/10"
+                        aria-label="Slide 2: This week"><span class="rounded-full bg-base-content/35 h-2.5 w-2.5 shrink-0" aria-hidden="true"></span><span class="sr-only">This week</span></a>
+                    <a href="#iphone-cap-3" class="btn btn-circle btn-ghost border-0 min-h-11 min-w-11 h-11 w-11 p-0 shadow-none hover:bg-base-content/10"
+                        aria-label="Slide 3: Tags"><span class="rounded-full bg-base-content/35 h-2.5 w-2.5 shrink-0" aria-hidden="true"></span><span class="sr-only">Tags</span></a>
+                    <a href="#iphone-cap-4" class="btn btn-circle btn-ghost border-0 min-h-11 min-w-11 h-11 w-11 p-0 shadow-none hover:bg-base-content/10"
+                        aria-label="Slide 4: Reports"><span class="rounded-full bg-base-content/35 h-2.5 w-2.5 shrink-0" aria-hidden="true"></span><span class="sr-only">Reports</span></a>
+                    <a href="#iphone-cap-5" class="btn btn-circle btn-ghost border-0 min-h-11 min-w-11 h-11 w-11 p-0 shadow-none hover:bg-base-content/10"
+                        aria-label="Slide 5: Search"><span class="rounded-full bg-base-content/35 h-2.5 w-2.5 shrink-0" aria-hidden="true"></span><span class="sr-only">Search</span></a>
+                    <a href="#iphone-cap-6" class="btn btn-circle btn-ghost border-0 min-h-11 min-w-11 h-11 w-11 p-0 shadow-none hover:bg-base-content/10"
+                        aria-label="Slide 6: Settings and export"><span class="rounded-full bg-base-content/35 h-2.5 w-2.5 shrink-0" aria-hidden="true"></span><span class="sr-only">Settings and export</span></a>
+                </div>
+                    </div>
                 </div>
             </div>
 
