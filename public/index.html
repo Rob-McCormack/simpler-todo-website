@@ -121,6 +121,18 @@
         #main-nav-menu>summary::-webkit-details-marker {
             display: none;
         }
+
+        #main-nav-menu .nav-menu-icon-close {
+            display: none;
+        }
+
+        #main-nav-menu[open] .nav-menu-icon-hamburger {
+            display: none;
+        }
+
+        #main-nav-menu[open] .nav-menu-icon-close {
+            display: block;
+        }
     </style>
 </head>
 
@@ -143,13 +155,22 @@
             </div>
             <div class="navbar-end gap-2 overflow-visible">
                 <details id="main-nav-menu" class="relative overflow-visible">
-                    <summary class="btn btn-ghost btn-square cursor-pointer" aria-label="Open menu">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <summary class="btn btn-ghost btn-square cursor-pointer grid place-items-center shrink-0"
+                        aria-label="Open menu" aria-expanded="false" aria-controls="main-nav-panel">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="nav-menu-icon-hamburger col-start-1 row-start-1 h-6 w-6" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            aria-hidden="true">
                             <path d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="nav-menu-icon-close col-start-1 row-start-1 h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            aria-hidden="true">
+                            <path d="M18 6 6 18M6 6l12 12" />
+                        </svg>
                     </summary>
-                    <div
+                    <div id="main-nav-panel"
                         class="absolute right-0 top-full z-[100] mt-2 w-64 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg max-h-[min(24rem,85vh)] overflow-y-auto">
                         <ul class="menu menu-sm w-full p-0">
                             <li><a href="#features" class="nav-anchor">Features</a></li>
@@ -918,6 +939,17 @@
 
             function initPageScripts() {
                 applyColorScheme(getColorScheme());
+
+                var navDetails = document.getElementById('main-nav-menu');
+                if (navDetails) {
+                    var navSummary = navDetails.querySelector('summary');
+                    navDetails.addEventListener('toggle', function () {
+                        if (!navSummary) return;
+                        var open = navDetails.open;
+                        navSummary.setAttribute('aria-expanded', open ? 'true' : 'false');
+                        navSummary.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+                    });
+                }
 
                 var themeToggle = document.getElementById('theme-mode-toggle');
                 if (themeToggle) {
